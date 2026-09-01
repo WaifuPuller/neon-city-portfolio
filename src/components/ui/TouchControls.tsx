@@ -21,6 +21,16 @@ export const TouchControls: React.FC = () => {
 
   const [knob, setKnob] = useState({ x: 0, y: 0 });
   const [sprinting, setSprinting] = useState(false);
+
+  /** Sprint has two sources; either one alone should be enough to trigger it. */
+  const stickAtEdge = useRef(false);
+  const buttonHeld = useRef(false);
+
+  const applySprint = useCallback(() => {
+    const on = stickAtEdge.current || buttonHeld.current;
+    setTouchSprint(on);
+    setSprinting(on);
+  }, []);
   const stickId = useRef<number | null>(null);
   const stickOrigin = useRef({ x: 0, y: 0 });
   const lookId = useRef<number | null>(null);
@@ -48,9 +58,14 @@ export const TouchControls: React.FC = () => {
       return;
     }
     setTouchMove(-(ky / STICK_RADIUS), kx / STICK_RADIUS, true);
-    setTouchSprint(norm > 0.86);
-    setSprinting(norm > 0.86);
-  }, []);
+
+    // Pushing the stick to its edge is a second way to sprint, but it must not
+    // CANCEL the sprint button: this fires on every pointermove, so writing the
+    // flag directly made holding the button while steering impossible — which
+    // is the only time anyone wants to sprint.
+    stickAtEdge.current = norm > 0.86;
+    applySprint();
+  }, [applySprint]);
 
   const onStickDown = (e: React.PointerEvent) => {
     e.currentTarget.setPointerCapture(e.pointerId);
@@ -69,9 +84,9 @@ export const TouchControls: React.FC = () => {
     if (stickId.current !== e.pointerId) return;
     stickId.current = null;
     setKnob({ x: 0, y: 0 });
-    setSprinting(false);
     setTouchMove(0, 0, false);
-    setTouchSprint(false);
+    stickAtEdge.current = false;
+    applySprint();
   };
 
   /* ------------------------------------------------------------------- look */
@@ -101,6 +116,8 @@ export const TouchControls: React.FC = () => {
     if (!active) {
       stickId.current = null;
       lookId.current = null;
+      stickAtEdge.current = false;
+      buttonHeld.current = false;
       setKnob({ x: 0, y: 0 });
       setSprinting(false);
       setTouchMove(0, 0, false);
@@ -112,10 +129,15 @@ export const TouchControls: React.FC = () => {
   if (!active) return null;
 
   return (
-    <div className="absolute inset-0 z-40 md:hidden">
-      {/* Look surface — the right half of the screen, above the buttons */}
+    <>
+      {/*
+        The look surface sits BELOW the HUD (z-20 against the HUD's z-30) and is
+        inset from the top and bottom. Previously it was a full-height z-40
+        sheet over the right half of the screen, which silently swallowed every
+        tap meant for the achievements, sound and pause buttons.
+      */}
       <div
-        className="absolute bottom-0 right-0 top-0 w-1/2 touch-none"
+        className="absolute bottom-44 right-0 top-20 z-20 w-1/2 touch-none md:hidden"
         onPointerDown={onLookDown}
         onPointerMove={onLookMove}
         onPointerUp={onLookUp}
@@ -123,9 +145,11 @@ export const TouchControls: React.FC = () => {
         aria-hidden
       />
 
+      <div className="pointer-events-none absolute inset-0 z-40 md:hidden">
+
       {/* Movement stick */}
       <div
-        className="absolute bottom-8 left-6 touch-none select-none"
+        className="pointer-events-auto absolute bottom-8 left-6 touch-none select-none"
         style={{ width: STICK_RADIUS * 2, height: STICK_RADIUS * 2 }}
         onPointerDown={onStickDown}
         onPointerMove={onStickMove}
@@ -153,7 +177,7 @@ export const TouchControls: React.FC = () => {
       </div>
 
       {/* Action buttons */}
-      <div className="absolute bottom-8 right-6 flex flex-col items-end gap-3">
+      <div className="pointer-events-auto absolute bottom-8 right-6 flex flex-col items-end gap-3">
         {nearby && (
           <button
             onPointerDown={(e) => {
@@ -177,16 +201,16 @@ export const TouchControls: React.FC = () => {
           <button
             onPointerDown={(e) => {
               e.stopPropagation();
-              setTouchSprint(true);
-              setSprinting(true);
+              buttonHeld.current = true;
+              applySprint();
             }}
             onPointerUp={() => {
-              setTouchSprint(false);
-              setSprinting(false);
+              buttonHeld.current = false;
+              applySprint();
             }}
             onPointerCancel={() => {
-              setTouchSprint(false);
-              setSprinting(false);
+              buttonHeld.current = false;
+              applySprint();
             }}
             className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-neon-pink/50 bg-neon-pink/10 text-neon-pink backdrop-blur-md active:bg-neon-pink/25"
             aria-label="Sprint"
@@ -210,12 +234,13 @@ export const TouchControls: React.FC = () => {
       </div>
 
       {/* Compact core counter, since the desktop one is hidden on small screens */}
-      <div className="glass clip-tag pointer-events-none absolute right-3 top-16 flex items-center gap-1.5 px-2.5 py-1.5">
+      <div className="glass clip-tag absolute right-3 top-16 flex items-center gap-1.5 px-2.5 py-1.5">
         <span className="h-2 w-2 rounded-full bg-neon-amber" />
         <span className="font-mono text-[11px] font-bold tabular-nums text-neon-amber">
           {cores}/5
         </span>
       </div>
-    </div>
+      </div>
+    </>
   );
 };

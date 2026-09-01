@@ -96,6 +96,15 @@ export const App: React.FC = () => {
       if (s.activeModal === 'console') s.closeModal();
       else if (!s.activeModal) s.openModal('console');
     },
+    /**
+     * The browser eats the Esc keydown that exits pointer lock, so the key
+     * handler never fires and the pause menu would never open once the mouse
+     * was captured. Reacting to the lock being dropped restores it.
+     */
+    onPointerLockLost: () => {
+      const s = useGameStore.getState();
+      if (s.phase === 'PLAYING' && !s.activeModal) s.togglePause();
+    },
   });
 
   const inputOpts = useRef({ sensitivity, invertY, enabled: false });

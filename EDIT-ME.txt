@@ -396,8 +396,13 @@ HOW DO I CHANGE THE COLOURS?
     and use 'magenta', 'emerald' or 'amber'.
 
 THE GAME RUNS SLOWLY ON MY MACHINE
-    Press ESC -> SETTINGS -> GRAPHICS and choose a lower setting.
-    It picks a sensible default automatically, but you can always override it.
+    It now measures its own framerate and lowers the graphics automatically
+    if it drops below about 40fps, telling you when it does.
+
+    To set it yourself: ESC -> SETTINGS -> GRAPHICS. Choosing a level by hand
+    switches the automatic adjustment off, so your choice sticks.
+
+    LOW turns off bloom and particles entirely and is the fastest.
 
 HOW DO I CHANGE THE BROWSER TAB TITLE?
     Open  index.html  and edit the <title> line near the top.
@@ -420,14 +425,20 @@ HOW DO I PUT IT ONLINE?
   THE CONTROLS (for your own reference)
 ===============================================================================
 
+    Click the view ...... captures the mouse so it steers the camera
+    ALT ................. releases the mouse so you can click buttons
     W A S D or arrows ... walk
-    Mouse ............... look around
-    Shift ............... sprint
+    Mouse ............... look around (once captured)
+    Shift ............... sprint - a SPRINTING badge appears when it is on
     Space ............... jump
     E ................... open the thing you are standing at
-    Esc ................. pause / close a panel
+    Esc ................. pause menu (Resume / Settings / Restart / Main Menu)
     ` (backtick) ........ developer terminal, type "help"
 
-On phones a joystick and buttons appear instead.
+The objective panel in the bottom-left shows itself when the objective
+changes, then folds into a small tab. Click the tab to open it again.
+
+On phones a joystick, jump and sprint buttons appear instead. Drag the right
+side of the screen to look around.
 
 ===============================================================================

@@ -10,11 +10,16 @@ import {
   Gem,
   CheckCircle2,
   Circle,
+  ChevronRight,
+  ChevronLeft,
+  Zap,
+  MousePointer2,
 } from 'lucide-react';
 import { useGameStore, selectActiveQuest, selectCoreCount, xpForLevel, THEMES } from '../../store/useGameStore';
 import { portfolio } from '../../config/portfolio';
 import { Minimap } from './Minimap';
 import { audio } from '../../utils/audioSynth';
+import { input, playerState } from '../../systems/input';
 
 /** Lightweight frame counter that never re-renders the rest of the HUD. */
 const FpsMeter: React.FC = () => {
@@ -40,6 +45,60 @@ const FpsMeter: React.FC = () => {
 
   const tone = fps >= 50 ? 'text-neon-mint' : fps >= 30 ? 'text-neon-amber' : 'text-neon-red';
   return <span className={`font-mono text-[10px] tabular-nums ${tone}`}>{fps} FPS</span>;
+};
+
+/**
+ * Sprint / mouse-capture readout.
+ *
+ * Polled rather than driven by React state: input deliberately lives outside
+ * the store so it cannot re-render the HUD every frame. 10Hz is plenty for a
+ * badge, and it does not depend on requestAnimationFrame.
+ */
+const StatusChips: React.FC<{ touch: boolean }> = ({ touch }) => {
+  const [sprinting, setSprinting] = useState(false);
+  const [locked, setLocked] = useState(false);
+
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      setSprinting(input.sprint && playerState.speed > 1);
+      setLocked(input.pointerLocked);
+    }, 100);
+    return () => window.clearInterval(id);
+  }, []);
+
+  return (
+    <div className="pointer-events-none absolute inset-x-0 top-20 flex flex-col items-center gap-2 px-4 sm:top-24">
+      <AnimatePresence>
+        {sprinting && (
+          <motion.div
+            initial={{ opacity: 0, y: -8, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="clip-tag flex items-center gap-1.5 border border-neon-pink/60 bg-neon-pink/15 px-3 py-1 font-display text-[10px] font-black tracking-[0.2em] text-neon-pink"
+          >
+            <Zap className="h-3 w-3" /> SPRINTING
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {!touch && !locked && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="glass clip-tag flex items-center gap-2 px-3 py-1.5 text-center font-mono text-[10px] tracking-[0.14em] text-slate-300"
+          >
+            <MousePointer2 className="h-3 w-3 shrink-0 text-neon-cyan" />
+            CLICK TO LOOK AROUND
+            <span className="text-slate-600">|</span>
+            <span className="kbd">ALT</span>
+            <span className="text-slate-500">frees cursor</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
 };
 
 const IconButton: React.FC<{
@@ -83,6 +142,20 @@ export const HUD: React.FC<{ touch: boolean }> = ({ touch }) => {
   const need = xpForLevel(level);
   const pct = Math.min(100, (xp / need) * 100);
   const unlocked = achievements.filter((a) => a.unlocked).length;
+
+  /**
+   * The objective panel opens itself whenever the objective changes, then
+   * folds away after a few seconds so it is not permanently in the way.
+   */
+  const [questOpen, setQuestOpen] = useState(true);
+  const questId = quest?.id;
+
+  useEffect(() => {
+    if (!questId) return;
+    setQuestOpen(true);
+    const t = window.setTimeout(() => setQuestOpen(false), 6000);
+    return () => window.clearTimeout(t);
+  }, [questId]);
 
   // Flash the XP bar briefly whenever it grows.
   const prevXp = useRef(xp);
@@ -188,6 +261,8 @@ export const HUD: React.FC<{ touch: boolean }> = ({ touch }) => {
             </IconButton>
           </div>
 
+          <StatusChips touch={touch} />
+
           {/* -------------------------------------------- CENTRE: INTERACTION */}
           <div className="absolute inset-x-0 bottom-[24%] flex justify-center px-4 sm:bottom-[26%]">
             <AnimatePresence mode="wait">
@@ -224,61 +299,101 @@ export const HUD: React.FC<{ touch: boolean }> = ({ touch }) => {
           </div>
 
           {/* ---------------------------------------------------- BOTTOM LEFT */}
-          {/* Lifted clear of the virtual joystick on touch layouts, which sits
-              in the same bottom-left corner below the md breakpoint. */}
+          {/* Opens itself when the objective changes, then folds down to a
+              small tab so it is not permanently covering the view. Click
+              either state to toggle. Lifted clear of the virtual joystick on
+              touch layouts. */}
           <div
-            className={`pointer-events-auto absolute left-3 max-w-[70vw] sm:left-5 sm:max-w-xs ${
+            className={`pointer-events-auto absolute left-3 sm:left-5 ${
               touch ? 'bottom-48 md:bottom-5' : 'bottom-3 sm:bottom-5'
             }`}
           >
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={quest?.id ?? 'complete'}
-                initial={{ opacity: 0, x: -18 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -18 }}
-                transition={{ duration: 0.35 }}
-                className="glass clip-cyber border-l-2 p-3.5 sm:p-4"
-                style={{ borderLeftColor: palette.accent }}
-              >
-                <div
-                  className="flex items-center gap-1.5 font-display text-[9px] font-bold tracking-[0.28em]"
-                  style={{ color: palette.accent }}
+            <AnimatePresence mode="wait" initial={false}>
+              {questOpen ? (
+                <motion.div
+                  key="open"
+                  initial={{ opacity: 0, x: -18 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -18 }}
+                  transition={{ duration: 0.28 }}
+                  className="glass clip-cyber max-w-[70vw] border-l-2 p-3.5 sm:max-w-xs sm:p-4"
+                  style={{ borderLeftColor: palette.accent }}
                 >
-                  <Target className="h-3 w-3" />
-                  {quest ? 'OBJECTIVE' : 'ALL OBJECTIVES COMPLETE'}
-                </div>
-
-                {quest ? (
-                  <>
-                    <div className="mt-1.5 font-display text-[13px] font-bold leading-tight text-white">
-                      {quest.title}
+                  <div className="flex items-start justify-between gap-3">
+                    <div
+                      className="flex items-center gap-1.5 font-display text-[9px] font-bold tracking-[0.28em]"
+                      style={{ color: palette.accent }}
+                    >
+                      <Target className="h-3 w-3" />
+                      {quest ? 'OBJECTIVE' : 'ALL OBJECTIVES COMPLETE'}
                     </div>
-                    <div className="mt-1 text-xs leading-snug text-slate-400">
-                      {quest.description}
-                    </div>
-                  </>
-                ) : (
-                  <div className="mt-1.5 text-xs leading-snug text-slate-300">
-                    You have seen the whole city. Find any remaining Data Cores, or open a channel.
+                    <button
+                      onClick={() => {
+                        audio.uiClick();
+                        setQuestOpen(false);
+                      }}
+                      aria-label="Hide objective"
+                      title="Hide"
+                      className="-mr-1 -mt-1 shrink-0 rounded p-1 text-slate-500 transition hover:text-white"
+                    >
+                      <ChevronLeft className="h-3.5 w-3.5" />
+                    </button>
                   </div>
-                )}
 
-                <div className="mt-2.5 flex items-center gap-1">
-                  {quests.map((q) => (
-                    <span key={q.id} title={q.title}>
-                      {q.done ? (
-                        <CheckCircle2 className="h-3 w-3" style={{ color: palette.primary }} />
-                      ) : (
-                        <Circle className="h-3 w-3 text-slate-600" />
-                      )}
+                  {quest ? (
+                    <>
+                      <div className="mt-1 font-display text-[13px] font-bold leading-tight text-white">
+                        {quest.title}
+                      </div>
+                      <div className="mt-1 text-xs leading-snug text-slate-400">
+                        {quest.description}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="mt-1 text-xs leading-snug text-slate-300">
+                      You have seen the whole city. Find any remaining Data Cores, or open a
+                      channel.
+                    </div>
+                  )}
+
+                  <div className="mt-2.5 flex items-center gap-1">
+                    {quests.map((q) => (
+                      <span key={q.id} title={q.title}>
+                        {q.done ? (
+                          <CheckCircle2 className="h-3 w-3" style={{ color: palette.primary }} />
+                        ) : (
+                          <Circle className="h-3 w-3 text-slate-600" />
+                        )}
+                      </span>
+                    ))}
+                    <span className="ml-1 font-mono text-[9px] text-slate-500">
+                      {quests.filter((q) => q.done).length}/{quests.length}
                     </span>
-                  ))}
-                  <span className="ml-1 font-mono text-[9px] text-slate-500">
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.button
+                  key="closed"
+                  initial={{ opacity: 0, x: -14 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -14 }}
+                  transition={{ duration: 0.28 }}
+                  onClick={() => {
+                    audio.uiClick();
+                    setQuestOpen(true);
+                  }}
+                  onMouseEnter={() => audio.uiHover()}
+                  title="Show objective"
+                  className="glass clip-tag flex items-center gap-2 border-l-2 py-2 pl-3 pr-2.5 transition hover:bg-white/[0.06]"
+                  style={{ borderLeftColor: palette.accent }}
+                >
+                  <Target className="h-3.5 w-3.5" style={{ color: palette.accent }} />
+                  <span className="font-mono text-[10px] tabular-nums text-slate-300">
                     {quests.filter((q) => q.done).length}/{quests.length}
                   </span>
-                </div>
-              </motion.div>
+                  <ChevronRight className="h-3 w-3 text-slate-500" />
+                </motion.button>
+              )}
             </AnimatePresence>
           </div>
 

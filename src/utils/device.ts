@@ -52,12 +52,12 @@ export function detectQuality(): QualityLevel {
   const cores = navigator.hardwareConcurrency ?? 4;
   const memory = (navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? 8;
 
-  // Deliberately conservative: 'high' still has bloom and full detail, and a
-  // portfolio that runs smoothly everywhere beats one that looks marginally
-  // better on a workstation and stutters on a recruiter's laptop. Anyone who
-  // wants more can pick ultra in Settings.
-  if (cores >= 8 && memory >= 8) return 'high';
-  if (cores >= 4) return 'medium';
+  // Deliberately pessimistic. Core count says nothing about the GPU, and most
+  // laptops report 8+ cores while running integrated graphics that cannot
+  // afford bloom at full resolution. Start low-ish, then let AdaptiveQuality
+  // measure the real framerate and settle on the right level.
+  if (cores >= 12 && memory >= 8) return 'high';
+  if (cores >= 8 && memory >= 8) return 'medium';
   return 'low';
 }
 

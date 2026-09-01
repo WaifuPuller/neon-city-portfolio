@@ -108,6 +108,8 @@ export interface InputHandlers {
   onInteract?: () => void;
   onPause?: () => void;
   onConsole?: () => void;
+  /** Fired when the browser drops pointer lock (Esc, Alt, tab switch). */
+  onPointerLockLost?: () => void;
 }
 
 /**
@@ -127,6 +129,15 @@ export function attachInput(
     // keyup cannot latch sprint on.
     shiftHeld = e.shiftKey;
     recompute();
+
+    // Alt releases the mouse so the cursor can be used on the HUD. Held or
+    // tapped, either works; the browser also surrenders pointer lock on Alt
+    // in some window managers, which this keeps consistent with.
+    if (code === 'altleft' || code === 'altright') {
+      e.preventDefault();
+      exitPointerLock();
+      return;
+    }
 
     // Always allow escape and the console key, even when input is disabled.
     if (code === 'escape') {
@@ -198,7 +209,16 @@ export function attachInput(
   };
 
   const onPointerLockChange = () => {
+    const wasLocked = input.pointerLocked;
     input.pointerLocked = document.pointerLockElement === canvas;
+
+    if (wasLocked && !input.pointerLocked) {
+      // Esc both exits pointer lock AND is swallowed by the browser, so the
+      // keydown handler never sees it. Without this the pause menu would
+      // simply never open once the mouse had been captured.
+      clearInput();
+      handlers.current.onPointerLockLost?.();
+    }
   };
 
   window.addEventListener('keydown', onKeyDown);

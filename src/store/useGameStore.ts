@@ -82,6 +82,8 @@ export interface GameState {
 
   /* settings */
   quality: QualityLevel;
+  /** False once the visitor picks a level by hand; stops auto-adjustment. */
+  qualityAuto: boolean;
   theme: ThemeId;
   sfxEnabled: boolean;
   musicEnabled: boolean;
@@ -115,6 +117,8 @@ export interface GameState {
   togglePause: () => void;
 
   setQuality: (q: QualityLevel) => void;
+  /** Used by the framerate monitor; does not disable auto-adjustment. */
+  autoSetQuality: (q: QualityLevel) => void;
   setTheme: (t: ThemeId) => void;
   toggleSfx: () => void;
   toggleMusic: () => void;
@@ -145,6 +149,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   introSkipped: false,
 
   quality: detectQuality(),
+  qualityAuto: true,
   theme: 'cyan',
   sfxEnabled: true,
   musicEnabled: true,
@@ -223,8 +228,11 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   setQuality: (q) => {
     audio.uiClick();
-    set({ quality: q });
+    // A deliberate choice always wins over the monitor.
+    set({ quality: q, qualityAuto: false });
   },
+
+  autoSetQuality: (q) => set({ quality: q }),
   setTheme: (t) => {
     audio.uiClick();
     set({ theme: t });

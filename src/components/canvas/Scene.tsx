@@ -7,6 +7,7 @@ import { NeonCity } from './NeonCity';
 import { Landmarks } from './Landmarks';
 import { Player } from './Player';
 import { CinematicIntro } from './CinematicIntro';
+import { AdaptiveQuality } from './AdaptiveQuality';
 import { useGameStore, THEMES } from '../../store/useGameStore';
 import { QUALITY_PROFILES } from '../../utils/device';
 import { portfolio } from '../../config/portfolio';
@@ -160,6 +161,7 @@ export const Scene: React.FC<{ onCaption: (c: string | null) => void }> = ({ onC
       <Landmarks />
       <Player />
       <CinematicIntro onCaption={onCaption} />
+      <AdaptiveQuality />
 
       {/* 4x MSAA on the composer target is a large cost for very little gain
           once bloom has softened the image; 2x is plenty. */}
