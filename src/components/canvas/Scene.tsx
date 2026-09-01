@@ -71,7 +71,7 @@ const LabHolograms: React.FC = () => {
   const list = useMemo(() => {
     const featured = portfolio.projects.filter((p) => p.featured);
     // Show the featured ones, or just the first few if none are flagged.
-    return (featured.length > 0 ? featured : portfolio.projects).slice(0, 4);
+    return (featured.length > 0 ? featured : portfolio.projects).slice(0, 3);
   }, []);
 
   // No projects, or no lab to orbit: render nothing rather than an empty ring.
@@ -161,8 +161,10 @@ export const Scene: React.FC<{ onCaption: (c: string | null) => void }> = ({ onC
       <Player />
       <CinematicIntro onCaption={onCaption} />
 
+      {/* 4x MSAA on the composer target is a large cost for very little gain
+          once bloom has softened the image; 2x is plenty. */}
       {profile.bloom && (
-        <EffectComposer multisampling={profile.antialias ? 4 : 0}>
+        <EffectComposer multisampling={profile.antialias ? 2 : 0}>
           <Bloom
             intensity={1.15}
             luminanceThreshold={0.22}

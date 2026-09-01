@@ -87,6 +87,8 @@ const LandmarkNode: React.FC<{ zone: Zone; active: boolean; locked: boolean }> =
   const core = useRef<THREE.Mesh>(null);
   const glow = useRef<THREE.Mesh>(null);
   const label = useRef<HTMLDivElement>(null);
+  const lastScale = useRef(1);
+  const lastOpacity = useRef(1);
 
   const color = locked ? '#64748b' : zone.color;
 
@@ -106,10 +108,19 @@ const LandmarkNode: React.FC<{ zone: Zone; active: boolean; locked: boolean }> =
       );
       const CLAMP_AT = 16;
       const scale = dist < CLAMP_AT ? Math.max(0.32, dist / CLAMP_AT) : 1;
-      const opacity = dist < 7 ? 0 : dist > 120 ? 0 : 1;
+      const opacity = dist < 7 || dist > 110 ? 0 : 1;
 
-      label.current.style.transform = `scale(${scale})`;
-      label.current.style.opacity = String(opacity);
+      // Writing to style every frame forces a style recalculation per label,
+      // and there are nine of them. Only touch the DOM when a value actually
+      // changes.
+      if (Math.abs(scale - lastScale.current) > 0.01) {
+        lastScale.current = scale;
+        label.current.style.transform = `scale(${scale.toFixed(3)})`;
+      }
+      if (opacity !== lastOpacity.current) {
+        lastOpacity.current = opacity;
+        label.current.style.opacity = String(opacity);
+      }
     }
     if (ring.current) ring.current.rotation.z += delta * 0.35;
     if (frame.current) {
@@ -165,7 +176,11 @@ const LandmarkNode: React.FC<{ zone: Zone; active: boolean; locked: boolean }> =
           <icosahedronGeometry args={[0.55, 0]} />
           <meshBasicMaterial color={color} wireframe toneMapped={false} />
         </mesh>
-        <pointLight color={color} intensity={active ? 9 : 4} distance={16} decay={2} />
+        {/* Only the landmark you are standing at gets a real light. Nine
+            permanent point lights cost far more than they showed: every lit
+            material evaluates every light per fragment, and the emissive
+            materials plus bloom already carry the glow. */}
+        {active && <pointLight color={color} intensity={14} distance={18} decay={2} />}
       </group>
 
       {/* Floating label */}
@@ -247,7 +262,8 @@ const Core: React.FC<{ position: [number, number, number]; index: number }> = ({
           depthWrite={false}
         />
       </mesh>
-      <pointLight color="#fbbf24" intensity={4} distance={9} decay={2} />
+      {/* No point light here on purpose - the emissive core plus bloom reads
+          as a glow for none of the per-fragment cost. */}
     </group>
   );
 };

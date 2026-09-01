@@ -20,7 +20,7 @@ export const IntroOverlay: React.FC<{ caption: string | null }> = ({ caption }) 
       setShowSkip(false);
       return;
     }
-    const t = setTimeout(() => setShowSkip(true), 900);
+    const t = setTimeout(() => setShowSkip(true), 400);
     return () => clearTimeout(t);
   }, [active]);
 
@@ -49,16 +49,16 @@ export const IntroOverlay: React.FC<{ caption: string | null }> = ({ caption }) 
           {/* Letterbox */}
           <motion.div
             initial={{ height: 0 }}
-            animate={{ height: '11vh' }}
+            animate={{ height: '10vh' }}
             exit={{ height: 0 }}
-            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
             className="absolute inset-x-0 top-0 bg-black"
           />
           <motion.div
             initial={{ height: 0 }}
-            animate={{ height: '11vh' }}
+            animate={{ height: '10vh' }}
             exit={{ height: 0 }}
-            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
             className="absolute inset-x-0 bottom-0 bg-black"
           />
 
@@ -66,7 +66,7 @@ export const IntroOverlay: React.FC<{ caption: string | null }> = ({ caption }) 
           <motion.div
             initial={{ opacity: 1 }}
             animate={{ opacity: 0 }}
-            transition={{ duration: 1.4, ease: 'easeOut' }}
+            transition={{ duration: 0.7, ease: 'easeOut' }}
             className="absolute inset-0 bg-black"
           />
 
@@ -76,10 +76,10 @@ export const IntroOverlay: React.FC<{ caption: string | null }> = ({ caption }) 
               {caption && (
                 <motion.div
                   key={caption}
-                  initial={{ opacity: 0, y: 14, letterSpacing: '0.5em' }}
+                  initial={{ opacity: 0, y: 10, letterSpacing: '0.45em' }}
                   animate={{ opacity: 1, y: 0, letterSpacing: '0.28em' }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                   className="font-display text-[11px] font-bold text-neon-cyan/90 sm:text-sm"
                   style={{ textShadow: '0 0 22px rgba(34,211,238,0.55)' }}
                 >

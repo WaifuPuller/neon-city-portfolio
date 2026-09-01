@@ -1,0 +1,433 @@
+===============================================================================
+  NEON CITY - HOW TO CHANGE EVERYTHING
+  A plain-English guide. No coding knowledge assumed.
+===============================================================================
+
+THE ONE FILE YOU EDIT
+---------------------
+
+    src/config/portfolio.ts
+
+That is it. Every word, link, project, skill and job on the site comes from
+that one file. You never need to open anything else.
+
+Open it in any text editor (Notepad, VS Code, whatever you like).
+
+
+HOW TO SEE YOUR CHANGES
+-----------------------
+
+  1. Open a terminal in the project folder
+  2. Type:   npm run dev
+  3. Open:   http://localhost:3000
+  4. Edit the file and SAVE - the site updates by itself, no restart needed
+
+When you are happy:
+
+  git add -A
+  git commit -m "Updated my details"
+  git push
+
+Vercel rebuilds automatically. Your live site updates in ~2 minutes.
+
+
+THE GOLDEN RULE
+---------------
+
+  ANYTHING YOU LEAVE EMPTY DISAPPEARS.
+
+  - One project? You see one project. Not one plus three empty boxes.
+  - No jobs yet? The Career Timeline building is never built, and the city
+    fills that space with ordinary buildings instead.
+  - Add your first job next year and the building appears on its own.
+
+You cannot "break the layout" by having too little. It adjusts itself.
+
+
+===============================================================================
+  PART 1 - YOUR INFORMATION
+===============================================================================
+
+Everything below is inside src/config/portfolio.ts. Just change the text
+between the quote marks. Keep the quote marks and the commas.
+
+
+--- YOUR NAME AND TITLE -------------------------------------------------------
+
+Find:  identity: {
+
+    name: 'YOUR NAME',                    <- your real name
+    callsign: 'CYBER_ARCHITECT',          <- your gamer-tag, shown on the HUD
+    title: 'Full-Stack & 3D Web Developer',
+    tagline: 'I build immersive interfaces...',   <- one line under your name
+    location: 'Your City, Country',
+    availability: 'Open to opportunities',
+    avatarInitials: 'YN',                 <- 2 letters, shown in a box
+
+WARNING: keep the straight quotes '  like this. If your text contains an
+apostrophe (for example  it's ) write it as  it\'s  or use double quotes "".
+
+
+--- ABOUT YOU -----------------------------------------------------------------
+
+Find:  about: {
+
+    paragraphs: [
+      'First paragraph about you.',
+      'Second paragraph.',
+    ],
+
+Add or remove paragraphs freely. Each one needs quotes and a comma.
+Empty the list entirely and the whole "Operator Profile" building disappears.
+
+    facts: [
+      { label: 'Focus', value: '3D Web / AI Interfaces' },
+      { label: 'Experience', value: 'X+ years' },
+    ],
+
+Little info boxes. Add or delete lines as you like.
+
+    logLines: [
+      'Started coding at age __.',
+    ],
+
+Fun facts that type out one by one like a terminal. Optional - empty it to
+remove that section.
+
+
+--- EMAIL AND RESUME ----------------------------------------------------------
+
+Find:  links: {
+
+    email: 'you@example.com',
+    resumeUrl: '/resume.pdf',
+
+To add your CV: put your PDF in the  public  folder and name it exactly
+resume.pdf. That is all - the download button starts working.
+
+To remove the download button: set   resumeUrl: ''
+
+
+--- SOCIAL LINKS (GitHub, LinkedIn, Instagram, X...) ---------------------------
+
+Find:  socials: [
+
+    socials: [
+      { platform: 'github', url: 'https://github.com/yourhandle' },
+      { platform: 'linkedin', url: 'https://linkedin.com/in/yourhandle' },
+    ],
+
+ADD A LINK: add one line. It appears in three places automatically.
+
+      { platform: 'instagram', url: 'https://instagram.com/yourhandle' },
+      { platform: 'x', url: 'https://x.com/yourhandle' },
+
+REMOVE A LINK: delete its line. It vanishes everywhere.
+
+REORDER: the order here is the order on screen.
+
+Icons already built in:
+    github      linkedin    x           instagram
+    youtube     twitch      discord     medium
+    devto       stackoverflow           dribbble
+    behance     artstation  itch        website     email
+
+Something not on that list? It still works - it just gets a plain link icon.
+You can add a label so it reads nicely:
+
+      { platform: 'mastodon', url: 'https://...', label: 'Mastodon' },
+
+
+--- PROJECTS ------------------------------------------------------------------
+
+Find:  projects: [
+
+Copy this block and fill it in for each project. Add as many as you like.
+
+    {
+      id: 'p3',                        <- must be different from the others
+      title: 'My Project Name',
+      category: 'Fullstack',           <- any words you like, see note below
+      tagline: 'One line that makes someone want to click.',
+      description: 'What it does, who it is for, what made it hard.',
+      highlights: [
+        'The most impressive thing you achieved.',
+        'A number if you have one - users, speed, scale.',
+        'Something you learned along the way.',
+      ],
+      stack: ['React', 'Node.js', 'PostgreSQL'],
+      featured: true,                  <- optional, floats above the AI Lab
+      liveUrl: 'https://...',          <- optional, leave '' for no button
+      repoUrl: 'https://...',          <- optional, leave '' for no button
+    },
+
+CATEGORY: type anything. The filter buttons build themselves from whatever
+you use. Invent a new category and its button appears on its own. If all your
+projects share one category, the filter row hides itself (nothing to filter).
+
+COLOURS: assigned automatically. You do not need to pick one.
+
+
+--- WORK EXPERIENCE -----------------------------------------------------------
+
+Find:  experience: [
+
+    {
+      id: 'e2',                        <- must be unique
+      role: 'Frontend Developer',
+      company: 'Company Name',
+      period: '2024 - Present',
+      location: 'Remote',              <- optional
+      summary: 'One sentence on what you did.',
+      bullets: [
+        'An achievement with a number attached.',
+        'A system you owned end to end.',
+      ],
+      stack: ['React', 'TypeScript'],
+    },
+
+Newest job at the top. Empty the whole list and the Career Timeline building
+disappears from the city.
+
+
+--- SKILLS --------------------------------------------------------------------
+
+Find:  skills: [
+
+    {
+      id: 'frontend',
+      label: 'FRONTEND ENGINEERING',   <- the heading
+      icon: 'code',                    <- code | cube | brain | server | wrench
+      accent: '#22d3ee',               <- colour of the bars
+      skills: [
+        { name: 'React', level: 92 },  <- level is 0 to 100
+        { name: 'TypeScript', level: 88 },
+      ],
+    },
+
+Add or remove whole groups, or individual skills inside a group.
+Empty the list and the Skill Matrix building disappears.
+
+
+--- CERTIFICATIONS ------------------------------------------------------------
+
+Find:  credentials: [
+
+    {
+      id: 'c1',
+      title: 'AWS Solutions Architect',
+      issuer: 'Amazon Web Services',
+      year: '2025',
+      credentialId: 'ABC-12345',       <- optional
+      url: 'https://...',              <- optional, adds a VERIFY link
+    },
+
+Empty the list and the Achievement Hall disappears.
+
+
+--- CONTACT FORM --------------------------------------------------------------
+
+Find:  contact: {
+
+    formEndpoint: '',
+
+Leave it EMPTY and the form opens the visitor's email app with the message
+already written. Works immediately, nothing to set up.
+
+Want messages to arrive in your inbox instead? Sign up free at formspree.io,
+create a form, and paste the URL they give you:
+
+    formEndpoint: 'https://formspree.io/f/xxxxxxxx',
+
+
+--- THE SECRET VAULT (easter egg) ---------------------------------------------
+
+Find:  secret: {
+
+Whatever you write here only appears after someone finds all 5 hidden Data
+Cores in the city. A personal note, a thank-you, anything you like.
+
+
+--- THE OPENING CINEMATIC -----------------------------------------------------
+
+Find:  intro: {
+
+    enabled: true,
+    durationSeconds: 3,
+
+    enabled: false        -> skip it entirely, spawn straight into the city
+    durationSeconds: 5    -> make it longer
+    durationSeconds: 2    -> make it shorter
+
+Visitors can always skip it with a click or any key.
+
+
+===============================================================================
+  PART 2 - CHANGING THE CHARACTER MODEL
+===============================================================================
+
+Right now the character is "PrototypePete" from KayKit. It is CC0 (public
+domain) so it is completely safe to use commercially, no credit required.
+
+The settings live in the same file:
+
+    character: {
+      modelUrl: '/models/character.glb',
+      animationUrls: [],
+      height: 1.85,
+      yawOffset: 0,
+      clips: { idle: '', walk: '', run: '', jump: '', fall: '' },
+    },
+
+The game accepts  .glb  .gltf  and  .fbx  files. No conversion needed.
+
+
+--- OPTION A: a model that ALREADY has animations -----------------------------
+
+  1. Put the file in the  public/models  folder
+  2. Change one line:
+
+        modelUrl: '/models/my-character.glb',
+
+  3. Reload. Done.
+
+
+--- OPTION B: a model with NO animations (use Mixamo) -------------------------
+
+Mixamo is a free Adobe site that adds a skeleton and animations to a plain
+model. Go to  https://www.mixamo.com  and sign in with a free Adobe account.
+
+  1. Click UPLOAD CHARACTER and pick your model
+     (accepts .fbx .obj or a .zip - NOT .glb)
+
+     IMPORTANT: if your model came with texture images, put the model file and
+     all the texture files together in ONE folder with no sub-folders, then zip
+     that. Mixamo cannot find textures hidden inside a "textures" sub-folder.
+
+  2. Place the markers it asks for (chin, wrists, elbows, knees). ~1 minute.
+
+  3. Now download FOUR animations. Search for them by name:
+
+     ANIMATION      DOWNLOAD SETTINGS
+     -----------    --------------------------------------------------
+     Idle           Format: FBX Binary   Skin: WITH SKIN
+     Walking        Format: FBX Binary   Skin: Without Skin   + IN PLACE
+     Running        Format: FBX Binary   Skin: Without Skin   + IN PLACE
+     Jump           Format: FBX Binary   Skin: Without Skin
+
+     For all four:  Frames per second = 30 ,  Keyframe reduction = none
+
+     *** TICK THE "IN PLACE" CHECKBOX ON WALKING AND RUNNING ***
+     Without it the character slides away from where the game thinks it is.
+
+     The "Idle / With Skin" download is special - that file IS your character
+     (body + skeleton). The other three are animation data only.
+
+     Optional extra: "Falling Idle" (Without Skin) makes long falls look better.
+
+  4. Put all four files in  public/models
+
+  5. Update the config:
+
+        character: {
+          modelUrl: '/models/Idle.fbx',
+          animationUrls: [
+            '/models/Walking.fbx',
+            '/models/Running.fbx',
+            '/models/Jump.fbx',
+          ],
+          height: 1.85,
+          yawOffset: 0,
+          clips: { idle: '', walk: '', run: '', jump: '', fall: '' },
+        },
+
+  6. Reload and check it walks properly.
+
+
+--- IF SOMETHING LOOKS WRONG --------------------------------------------------
+
+Press F12 in your browser and click the Console tab. The game tells you
+exactly what it found:
+
+    [portfolio] character loaded with 4 clips: [mixamo.com, Walking, ...]
+    [portfolio] mapped to motion states: {idle: Idle, walk: Walking, ...}
+    [portfolio] model bounds 1.18 x 1.90 x 1.12, scaled by 0.974 to reach 1.85m
+
+  Character is lying down or facing backwards?
+      yawOffset: 180
+
+  Character is too big or too small?
+      It scales automatically. If it still looks off, change  height: 1.85
+
+  A movement is not playing?
+      Look at the "mapped to motion states" line. If something says  null ,
+      copy the exact clip name from the list above it into clips:
+
+          clips: { idle: 'Idle_A', walk: 'Walking', run: 'Run_Fwd', jump: '', fall: '' },
+
+  Nothing loads at all?
+      The game falls back to a simple blocky character. Check the filename in
+      modelUrl matches the real file EXACTLY, including capital letters.
+
+
+--- WHERE TO GET MODELS LEGALLY -----------------------------------------------
+
+Free, no credit required (CC0):
+    https://kaylousberg.itch.io/kaykit
+    https://quaternius.itch.io/
+    https://kenney.nl/assets
+
+Sketchfab also works - filter the licence to CC0 or CC-BY.
+
+  PLEASE CHECK THE LICENCE. This site is how employers see you. A character
+  ripped out of a commercial game (Genshin, PUBG, Fortnite and so on) is not
+  licensed for this, and it is the wrong thing to have at the centre of your
+  professional portfolio. CC0 needs nothing at all. CC-BY needs a visible
+  credit somewhere on the page.
+
+
+===============================================================================
+  PART 3 - COMMON QUESTIONS
+===============================================================================
+
+HOW DO I CHANGE THE COLOURS?
+    In the game, press ESC -> SETTINGS -> NEON THEME. Four themes.
+    To change the default, find  theme: 'cyan'  in src/store/useGameStore.ts
+    and use 'magenta', 'emerald' or 'amber'.
+
+THE GAME RUNS SLOWLY ON MY MACHINE
+    Press ESC -> SETTINGS -> GRAPHICS and choose a lower setting.
+    It picks a sensible default automatically, but you can always override it.
+
+HOW DO I CHANGE THE BROWSER TAB TITLE?
+    Open  index.html  and edit the <title> line near the top.
+
+HOW DO I CHANGE THE HIDDEN COLLECTIBLES?
+    src/systems/world.ts , find COLLECTIBLES. The numbers are positions:
+    [left/right, height, forward/back].
+
+I BROKE IT AND THE PAGE IS BLANK
+    Almost always a missing comma or quote mark in portfolio.ts.
+    Press F12, read the red error - it names the line number.
+    Or undo your change:   git checkout src/config/portfolio.ts
+
+HOW DO I PUT IT ONLINE?
+    Already done - it is on Vercel. Every  git push  updates the live site
+    automatically in about two minutes.
+
+
+===============================================================================
+  THE CONTROLS (for your own reference)
+===============================================================================
+
+    W A S D or arrows ... walk
+    Mouse ............... look around
+    Shift ............... sprint
+    Space ............... jump
+    E ................... open the thing you are standing at
+    Esc ................. pause / close a panel
+    ` (backtick) ........ developer terminal, type "help"
+
+On phones a joystick and buttons appear instead.
+
+===============================================================================

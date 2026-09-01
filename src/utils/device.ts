@@ -51,11 +51,14 @@ export function detectQuality(): QualityLevel {
 
   const cores = navigator.hardwareConcurrency ?? 4;
   const memory = (navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? 8;
-  const dpr = window.devicePixelRatio || 1;
 
-  if (cores >= 8 && memory >= 8) return 'ultra';
-  if (cores >= 4 && memory >= 4 && dpr <= 2) return 'high';
-  return 'medium';
+  // Deliberately conservative: 'high' still has bloom and full detail, and a
+  // portfolio that runs smoothly everywhere beats one that looks marginally
+  // better on a workstation and stutters on a recruiter's laptop. Anyone who
+  // wants more can pick ultra in Settings.
+  if (cores >= 8 && memory >= 8) return 'high';
+  if (cores >= 4) return 'medium';
+  return 'low';
 }
 
 export interface QualityProfile {
@@ -72,9 +75,17 @@ export interface QualityProfile {
   detail: boolean;
 }
 
+/**
+ * Tuned down after profiling the deployed build.
+ *
+ * Device pixel ratio is the single most expensive knob: at dpr 2 the GPU fills
+ * four times the pixels, and bloom re-reads the whole frame on top. Capping at
+ * 1.5 is visually near-identical on a laptop screen and roughly halves the
+ * fragment cost. Shadows are reserved for the ultra preset for the same reason.
+ */
 export const QUALITY_PROFILES: Record<QualityLevel, QualityProfile> = {
-  ultra: { dpr: [1, 2], shadows: true, bloom: true, antialias: true, particles: 1400, fogFar: 190, detail: true },
-  high: { dpr: [1, 1.75], shadows: true, bloom: true, antialias: true, particles: 900, fogFar: 160, detail: true },
-  medium: { dpr: [1, 1.25], shadows: false, bloom: true, antialias: false, particles: 450, fogFar: 130, detail: true },
-  low: { dpr: [0.75, 1], shadows: false, bloom: false, antialias: false, particles: 160, fogFar: 95, detail: false },
+  ultra: { dpr: [1, 1.5], shadows: true, bloom: true, antialias: true, particles: 700, fogFar: 175, detail: true },
+  high: { dpr: [1, 1.25], shadows: false, bloom: true, antialias: true, particles: 450, fogFar: 150, detail: true },
+  medium: { dpr: [1, 1], shadows: false, bloom: true, antialias: false, particles: 250, fogFar: 125, detail: true },
+  low: { dpr: [0.75, 1], shadows: false, bloom: false, antialias: false, particles: 0, fogFar: 95, detail: false },
 };

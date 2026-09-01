@@ -296,6 +296,22 @@ export const portfolio = {
     signoff: 'Thanks for exploring the whole city.',
   },
 
+  /* ------------------------------------------------------------------- INTRO */
+  /**
+   * The short cinematic camera fly-in shown after pressing ENTER.
+   *
+   *   enabled: false      -> skip it entirely, spawn straight into the city
+   *   durationSeconds: 3  -> how long it lasts, start to finish
+   *
+   * It is timed against the wall clock, so it takes the same real-world time
+   * on a slow machine as a fast one. Visitors can always skip it with a click
+   * or any key.
+   */
+  intro: {
+    enabled: true,
+    durationSeconds: 3,
+  },
+
   /* --------------------------------------------------------------- CHARACTER */
   /**
    * The avatar you walk around as. Swap it whenever you like — this works the

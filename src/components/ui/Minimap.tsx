@@ -39,31 +39,42 @@ export const Minimap: React.FC = () => {
 
     let raf = 0;
 
+    /* ----------------------------------------------------------------------
+     * The city never moves, so it is drawn ONCE to an offscreen canvas and
+     * blitted each frame. Re-filling sixty building rectangles every frame on
+     * a second rAF loop was pure waste running alongside the 3D render.
+     * -------------------------------------------------------------------- */
+    const base = document.createElement('canvas');
+    base.width = SIZE * dpr;
+    base.height = SIZE * dpr;
+    const bctx = base.getContext('2d');
+    if (!bctx) return;
+    bctx.scale(dpr, dpr);
+
+    bctx.fillStyle = 'rgba(5, 8, 18, 0.82)';
+    bctx.fillRect(0, 0, SIZE, SIZE);
+
+    bctx.fillStyle = 'rgba(148, 163, 184, 0.16)';
+    for (const b of buildings) {
+      const [mx, my] = toMap(b.position[0], b.position[2]);
+      const w = b.size[0] * scale;
+      const h = b.size[2] * scale;
+      bctx.fillRect(mx - w / 2, my - h / 2, w, h);
+    }
+
+    // Boulevard
+    bctx.strokeStyle = 'rgba(34, 211, 238, 0.22)';
+    bctx.lineWidth = 5 * scale;
+    bctx.beginPath();
+    const [bx0, bz0] = toMap(0, WORLD_BOUNDS.minZ);
+    const [, bz1] = toMap(0, WORLD_BOUNDS.maxZ);
+    bctx.moveTo(bx0, bz0);
+    bctx.lineTo(bx0, bz1);
+    bctx.stroke();
+
     const draw = () => {
       ctx.clearRect(0, 0, SIZE, SIZE);
-
-      // Backdrop
-      ctx.fillStyle = 'rgba(5, 8, 18, 0.82)';
-      ctx.fillRect(0, 0, SIZE, SIZE);
-
-      // Buildings as faint blocks
-      ctx.fillStyle = 'rgba(148, 163, 184, 0.16)';
-      for (const b of buildings) {
-        const [mx, my] = toMap(b.position[0], b.position[2]);
-        const w = b.size[0] * scale;
-        const h = b.size[2] * scale;
-        ctx.fillRect(mx - w / 2, my - h / 2, w, h);
-      }
-
-      // Boulevard
-      ctx.strokeStyle = 'rgba(34, 211, 238, 0.22)';
-      ctx.lineWidth = 5 * scale;
-      ctx.beginPath();
-      const [bx0, bz0] = toMap(0, WORLD_BOUNDS.minZ);
-      const [, bz1] = toMap(0, WORLD_BOUNDS.maxZ);
-      ctx.moveTo(bx0, bz0);
-      ctx.lineTo(bx0, bz1);
-      ctx.stroke();
+      ctx.drawImage(base, 0, 0, SIZE, SIZE);
 
       // Data cores
       for (const c of collectibles) {
