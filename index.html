@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en" class="h-full">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#05060e" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!-- EDIT: replace these with your own name and URL -->
+    <title>Neon City — Playable Portfolio</title>
+    <meta
+      name="description"
+      content="An interactive 3D portfolio you explore like a game. Walk a neon city to discover projects, skills, experience and contact details."
+    />
+    <meta name="author" content="YOUR NAME" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Neon City — Playable Portfolio" />
+    <meta
+      property="og:description"
+      content="An interactive 3D portfolio you explore like a game."
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;800;900&family=Rajdhani:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      /* Paint the shell dark immediately so there is no white flash before
+         React mounts and the loading screen takes over. */
+      html,
+      body {
+        margin: 0;
+        background: #05060e;
+        color: #e2e8f0;
+      }
+      #boot-splash {
+        position: fixed;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        font-family: system-ui, sans-serif;
+        font-size: 11px;
+        letter-spacing: 0.3em;
+        color: #22d3ee;
+        opacity: 0.6;
+      }
+    </style>
+  </head>
+  <body class="h-full">
+    <div id="root" class="h-full w-full">
+      <div id="boot-splash">LOADING</div>
+    </div>
+    <noscript>
+      <div style="padding: 40px; font-family: system-ui, sans-serif">
+        <h1>JavaScript required</h1>
+        <p>This portfolio is an interactive 3D experience and needs JavaScript enabled.</p>
+      </div>
+    </noscript>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
