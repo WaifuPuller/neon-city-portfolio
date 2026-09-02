@@ -50,6 +50,60 @@ export function nameClips(clips: THREE.AnimationClip[], url: string): THREE.Anim
   });
 }
 
+
+/* --------------------------------------------------------- root motion --- */
+
+/** Bones that typically carry a character's whole-body displacement. */
+const ROOT_BONE = /(hips|root|pelvis|armature|reference)/i;
+
+/**
+ * Remove horizontal travel baked into an animation.
+ *
+ * Mixamo clips downloaded WITHOUT the "In Place" option translate the whole
+ * skeleton forward over the course of the cycle, then snap back when it loops.
+ * Since the game moves the character itself, that reads as walking forward and
+ * being yanked back again, over and over.
+ *
+ * X and Z on the root bone are frozen at their starting values; Y is kept, so
+ * the natural bob of a walk or the arc of a jump survives. Clips that were
+ * already in place are unaffected, because their X and Z are constant anyway.
+ */
+export function stripRootMotion(clip: THREE.AnimationClip): THREE.AnimationClip {
+  const positionTracks = clip.tracks.filter((t) => t.name.endsWith('.position'));
+  if (positionTracks.length === 0) return clip;
+
+  // Prefer a track whose bone name looks like a root; otherwise, if there is
+  // exactly one position track in the whole clip, that is the root by
+  // elimination (rigs animate rotation on every other bone).
+  let targets = positionTracks.filter((t) => ROOT_BONE.test(t.name));
+  if (targets.length === 0 && positionTracks.length === 1) targets = positionTracks;
+  if (targets.length === 0) return clip;
+
+  const targetNames = new Set(targets.map((t) => t.name));
+
+  const tracks = clip.tracks.map((track) => {
+    if (!targetNames.has(track.name)) return track;
+
+    const cloned = track.clone();
+    const v = cloned.values;
+    const startX = v[0];
+    const startZ = v[2];
+    for (let i = 0; i + 2 < v.length; i += 3) {
+      v[i] = startX;
+      v[i + 2] = startZ;
+      // v[i + 1] (Y) deliberately untouched.
+    }
+    return cloned;
+  });
+
+  return new THREE.AnimationClip(clip.name, clip.duration, tracks, clip.blendMode);
+}
+
+/** Apply naming and root-motion cleanup in one step. */
+function prepare(clips: THREE.AnimationClip[], url: string): THREE.AnimationClip[] {
+  return nameClips(clips, url).map(stripRootMotion);
+}
+
 const gltfLoader = new GLTFLoader();
 const fbxLoader = new FBXLoader();
 
@@ -62,12 +116,12 @@ export interface LoadedModel {
 export async function loadModel(url: string): Promise<LoadedModel> {
   if (formatOf(url) === 'fbx') {
     const group = await fbxLoader.loadAsync(url);
-    return { scene: group, animations: nameClips(group.animations ?? [], url) };
+    return { scene: group, animations: prepare(group.animations ?? [], url) };
   }
   const gltf = await gltfLoader.loadAsync(url);
   return {
     scene: gltf.scene as THREE.Group,
-    animations: nameClips(gltf.animations ?? [], url),
+    animations: prepare(gltf.animations ?? [], url),
   };
 }
 
@@ -75,10 +129,10 @@ export async function loadModel(url: string): Promise<LoadedModel> {
 export async function loadClips(url: string): Promise<THREE.AnimationClip[]> {
   if (formatOf(url) === 'fbx') {
     const group = await fbxLoader.loadAsync(url);
-    return nameClips(group.animations ?? [], url);
+    return prepare(group.animations ?? [], url);
   }
   const gltf = await gltfLoader.loadAsync(url);
-  return nameClips(gltf.animations ?? [], url);
+  return prepare(gltf.animations ?? [], url);
 }
 
 /**
