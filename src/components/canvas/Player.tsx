@@ -5,16 +5,18 @@ import { useGameStore } from '../../store/useGameStore';
 import { input, playerState, takeLook } from '../../systems/input';
 import { castCameraRay, groundHeightAt, moveWithCollision } from '../../systems/collision';
 import { audio } from '../../utils/audioSynth';
+import {
+  ACCEL,
+  GRAVITY,
+  JUMP_VELOCITY,
+  SPRINT_SPEED,
+  WALK_SPEED,
+} from '../../systems/movement';
 import { AvatarFallback } from './AvatarFallback';
 import { CharacterModel } from './CharacterModel';
 import { CanvasErrorBoundary } from './CanvasErrorBoundary';
 import { portfolio } from '../../config/portfolio';
 
-const WALK_SPEED = 7.4;
-const SPRINT_SPEED = 13.2;
-const ACCEL = 14;
-const GRAVITY = 26;
-const JUMP_VELOCITY = 9.4;
 const EYE_HEIGHT = 1.35;
 
 const CAM_DISTANCE = 7.4;

@@ -6,12 +6,19 @@ import * as THREE from 'three';
 import { portfolio } from '../../config/portfolio';
 import { playerState } from '../../systems/input';
 import {
-  findTakeoffTime,
+  analyseJump,
   loadAllClips,
   loadModel,
   MotionState,
   resolveAllClips,
 } from '../../systems/characterLoader';
+import {
+  JUMP_AIRTIME,
+  MOVE_THRESHOLD,
+  RUN_THRESHOLD,
+  SPRINT_SPEED,
+  WALK_SPEED,
+} from '../../systems/movement';
 import { AvatarFallback } from './AvatarFallback';
 
 /* ---------------------------------------------------------------------------
@@ -24,12 +31,6 @@ import { AvatarFallback } from './AvatarFallback';
  * was authored in, and clip names are matched loosely because every asset pack
  * names things differently.
  * ------------------------------------------------------------------------- */
-
-/** Reference speeds, kept in step with Player.tsx, used to stop foot-sliding. */
-const WALK_REFERENCE = 7.4;
-const RUN_REFERENCE = 13.2;
-const RUN_THRESHOLD = 9.5;
-const MOVE_THRESHOLD = 0.6;
 
 /** A promise cache, so React StrictMode's double mount loads the model once. */
 const modelCache = new Map<string, Promise<{ scene: THREE.Group; animations: THREE.AnimationClip[] }>>();
@@ -151,17 +152,39 @@ const Rig: React.FC<{
   }, [animations, config.clips]);
 
   /**
-   * Where in the jump clip the character actually leaves the ground, so the
-   * animation is not still crouching while physics has already launched.
+   * How the jump clip maps onto the actual arc the body follows.
+   *
+   * `offset` skips the anticipation crouch, since velocity is applied the
+   * instant the key is pressed. `rate` stretches the airborne section of the
+   * clip to match how long the character is really off the ground, so the feet
+   * touch down at the same moment in both. `hold` is the last frame before the
+   * landing pose, used to freeze the descent during a longer fall - otherwise
+   * the character stands in a knees-bent landing pose in mid-air and only then
+   * drops the rest of the way.
    */
-  const jumpOffset = useMemo(() => {
-    if (!clips.jump) return 0;
+  const jump = useMemo(() => {
+    const none = { offset: 0, rate: 1, hold: Infinity };
+    if (!clips.jump) return none;
+
     const clip = animations.find((a) => a.name === clips.jump);
-    const t = clip ? findTakeoffTime(clip) : 0;
-    if (import.meta.env.DEV && t > 0) {
-      console.info(`[portfolio] jump takeoff detected at ${t.toFixed(2)}s; skipping the crouch.`);
+    if (!clip) return none;
+
+    const { takeoff, landing } = analyseJump(clip);
+    const airborneInClip = landing - takeoff;
+    if (airborneInClip <= 0.01) return none;
+
+    // Clamped: a wildly mismatched clip should be nudged, not played at 4x.
+    const rate = THREE.MathUtils.clamp(airborneInClip / JUMP_AIRTIME, 0.35, 2.5);
+
+    if (import.meta.env.DEV) {
+      console.info(
+        `[portfolio] jump clip: takeoff ${takeoff.toFixed(2)}s, landing ` +
+          `${landing.toFixed(2)}s (${airborneInClip.toFixed(2)}s airborne) vs ` +
+          `${JUMP_AIRTIME.toFixed(2)}s of real airtime -> playing at ${rate.toFixed(2)}x`,
+      );
     }
-    return t;
+    // Hold a hair before touchdown so the landing pose never shows mid-air.
+    return { offset: takeoff, rate, hold: Math.max(takeoff, landing - 0.06) };
   }, [animations, clips.jump]);
 
   /* Shadows on every mesh in the model. */
@@ -227,8 +250,12 @@ const Rig: React.FC<{
         action.reset();
         action.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat, Infinity);
         action.clampWhenFinished = once;
-        // Start the jump at the launch frame rather than the crouch.
-        if (next === 'jump' && jumpOffset > 0) action.time = jumpOffset;
+        // Start at the launch frame rather than the crouch, and play the
+        // airborne section at whatever rate makes it land when the body does.
+        if (next === 'jump') {
+          action.time = jump.offset;
+          action.timeScale = jump.rate;
+        }
         action.fadeIn(once ? 0.06 : 0.16).play();
       }
       if (from && actions[from] && from !== to) {
@@ -241,10 +268,17 @@ const Rig: React.FC<{
     const active = current.current ? clips[current.current] : null;
     if (active && actions[active]) {
       const action = actions[active]!;
-      if (current.current === 'walk') {
-        action.timeScale = THREE.MathUtils.clamp(speed / WALK_REFERENCE, 0.45, 1.9);
+      if (current.current === 'jump') {
+        // Falling from a rooftop takes far longer than a standing hop, so once
+        // the clip reaches the frame just before touchdown, hold it there until
+        // the feet are actually on something.
+        if (!playerState.grounded && action.time >= jump.hold) {
+          action.time = jump.hold;
+        }
+      } else if (current.current === 'walk') {
+        action.timeScale = THREE.MathUtils.clamp(speed / WALK_SPEED, 0.45, 1.9);
       } else if (current.current === 'run') {
-        action.timeScale = THREE.MathUtils.clamp(speed / RUN_REFERENCE, 0.6, 1.8);
+        action.timeScale = THREE.MathUtils.clamp(speed / SPRINT_SPEED, 0.6, 1.8);
       } else {
         action.timeScale = 1;
       }

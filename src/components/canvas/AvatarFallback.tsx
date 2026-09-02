@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { playerState } from '../../systems/input';
+import { MOVE_THRESHOLD, RUN_THRESHOLD } from '../../systems/movement';
 
 /* ---------------------------------------------------------------------------
  * Procedural blocky avatar.
@@ -11,9 +12,6 @@ import { playerState } from '../../systems/input';
  * character to walk around as — there is no state in which the player is
  * invisible.
  * ------------------------------------------------------------------------- */
-
-const RUN_THRESHOLD = 9.5;
-const MOVE_THRESHOLD = 0.6;
 
 export const AvatarFallback: React.FC = () => {
   const leftArm = useRef<THREE.Mesh>(null);
