@@ -135,6 +135,10 @@ export function attachInput(
     // in some window managers, which this keeps consistent with.
     if (code === 'altleft' || code === 'altright') {
       e.preventDefault();
+      // Flagged so the lock-change handler knows this was deliberate and does
+      // not pause the game - the whole point of Alt is to free the cursor
+      // while play continues.
+      pointerLockReleasedByUser = true;
       exitPointerLock();
       return;
     }
@@ -213,11 +217,17 @@ export function attachInput(
     input.pointerLocked = document.pointerLockElement === canvas;
 
     if (wasLocked && !input.pointerLocked) {
-      // Esc both exits pointer lock AND is swallowed by the browser, so the
-      // keydown handler never sees it. Without this the pause menu would
-      // simply never open once the mouse had been captured.
       clearInput();
-      handlers.current.onPointerLockLost?.();
+
+      if (pointerLockReleasedByUser) {
+        // Alt: the visitor wants the cursor back but is still playing.
+        pointerLockReleasedByUser = false;
+      } else {
+        // Esc both exits pointer lock AND is swallowed by the browser, so the
+        // keydown handler never sees it. Without this the pause menu would
+        // simply never open once the mouse had been captured.
+        handlers.current.onPointerLockLost?.();
+      }
     }
   };
 
@@ -243,24 +253,49 @@ export function attachInput(
   };
 }
 
-/** Set once the browser has refused pointer lock, so we stop asking. */
-let pointerLockBlocked = false;
+/**
+ * Consecutive pointer-lock refusals.
+ *
+ * Chrome RATE LIMITS pointer lock: after exiting with Esc, re-requesting
+ * within roughly a second is rejected with a SecurityError. Treating a single
+ * refusal as permanent therefore killed mouse look for the rest of the
+ * session the first time anyone pressed Esc and clicked back in. Only give up
+ * after several failures in a row, and forget them all on success.
+ */
+let lockFailures = 0;
+const MAX_LOCK_FAILURES = 4;
+
+/** Set by the Alt handler so releasing the mouse does not also pause. */
+export let pointerLockReleasedByUser = false;
+
+export function markPointerLockReleasedByUser(v: boolean) {
+  pointerLockReleasedByUser = v;
+}
 
 export function requestPointerLock(canvas: HTMLElement) {
-  if (pointerLockBlocked || document.pointerLockElement === canvas) return;
+  if (lockFailures >= MAX_LOCK_FAILURES) return;
+  if (document.pointerLockElement === canvas) return;
+
   try {
-    // Chrome 111+ returns a promise here; older browsers return undefined.
-    // An unhandled rejection would spam the console on every click inside an
-    // iframe (which is exactly where pointer lock tends to be disallowed).
+    // Chrome 111+ returns a promise; older browsers return undefined. An
+    // unhandled rejection would spam the console on every click in a context
+    // where lock is disallowed, such as a sandboxed iframe.
     const result = canvas.requestPointerLock() as unknown as Promise<void> | undefined;
     if (result && typeof result.catch === 'function') {
-      result.catch(() => {
-        pointerLockBlocked = true;
-      });
+      result.then(
+        () => {
+          lockFailures = 0;
+        },
+        () => {
+          lockFailures += 1;
+        },
+      );
+    } else {
+      lockFailures = 0;
     }
   } catch {
     // Safari and sandboxed iframes throw synchronously instead.
-    pointerLockBlocked = true;
+    lockFailures += 1;
   }
 }
 

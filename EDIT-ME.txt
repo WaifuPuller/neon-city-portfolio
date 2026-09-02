@@ -317,8 +317,11 @@ model. Go to  https://www.mixamo.com  and sign in with a free Adobe account.
 
      For all four:  Frames per second = 30 ,  Keyframe reduction = none
 
-     *** TICK THE "IN PLACE" CHECKBOX ON WALKING AND RUNNING ***
-     Without it the character slides away from where the game thinks it is.
+     TICK THE "IN PLACE" CHECKBOX ON WALKING AND RUNNING if you see it.
+     If you forget, it is handled anyway - the game strips the built-in
+     forward travel out of every animation automatically. Without that, a
+     walk cycle carries the character forward and then snaps it back on every
+     loop, which looks like walking and being yanked backwards over and over.
 
      The "Idle / With Skin" download is special - that file IS your character
      (body + skeleton). The other three are animation data only.
