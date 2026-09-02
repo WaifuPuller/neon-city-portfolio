@@ -145,7 +145,7 @@ export const TouchControls: React.FC = () => {
         aria-hidden
       />
 
-      <div className="pointer-events-none absolute inset-0 z-40 md:hidden">
+      <div className="safe-area pointer-events-none absolute z-40 md:hidden">
 
       {/* Movement stick */}
       <div

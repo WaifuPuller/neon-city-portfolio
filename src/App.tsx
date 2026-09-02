@@ -19,8 +19,13 @@ import { useGameStore } from './store/useGameStore';
 import { attachInput, clearInput, exitPointerLock, requestPointerLock } from './systems/input';
 import { hasWebGL, isTouchDevice } from './utils/device';
 import { audio } from './utils/audioSynth';
+import { useViewportFit } from './hooks/useViewportFit';
 
 export const App: React.FC = () => {
+  // Track the space the browser actually gives us, so mobile Chrome's address
+  // bar sliding in and out cannot cover the top of the HUD.
+  useViewportFit();
+
   const phase = useGameStore((s) => s.phase);
   const activeModal = useGameStore((s) => s.activeModal);
   const loadProgress = useGameStore((s) => s.loadProgress);
