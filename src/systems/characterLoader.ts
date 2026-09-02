@@ -99,6 +99,60 @@ export function stripRootMotion(clip: THREE.AnimationClip): THREE.AnimationClip 
   return new THREE.AnimationClip(clip.name, clip.duration, tracks, clip.blendMode);
 }
 
+
+/**
+ * Time within a jump clip at which the character actually leaves the ground.
+ *
+ * Jump animations open with an anticipation crouch: the hips dip, then drive
+ * upward. The game applies jump velocity the instant the key is pressed, so
+ * playing the clip from frame zero means the character is already rising
+ * through the air while still visually crouching, and only "jumps" once it is
+ * on the way back down.
+ *
+ * Delaying the physics to match would make the controls feel unresponsive, so
+ * instead the clip is started at the moment of launch. That moment is found by
+ * following the root bone's height: locate the bottom of the crouch, then take
+ * the first frame after it where the hips return to their resting height.
+ *
+ * Returns 0 for clips with no anticipation, which makes this a no-op rather
+ * than something that needs configuring per model.
+ */
+export function findTakeoffTime(clip: THREE.AnimationClip): number {
+  const track = clip.tracks.find(
+    (t) => t.name.endsWith('.position') && ROOT_BONE.test(t.name),
+  ) as THREE.VectorKeyframeTrack | undefined;
+  if (!track) return 0;
+
+  const values = track.values;
+  const times = track.times;
+  const frames = Math.min(times.length, Math.floor(values.length / 3));
+  if (frames < 4) return 0;
+
+  const startY = values[1];
+
+  // Bottom of the crouch, searched over the opening portion of the clip only.
+  const searchEnd = Math.max(2, Math.floor(frames * 0.6));
+  let lowest = startY;
+  let lowestIndex = 0;
+  for (let i = 0; i < searchEnd; i++) {
+    const y = values[i * 3 + 1];
+    if (y < lowest) {
+      lowest = y;
+      lowestIndex = i;
+    }
+  }
+
+  // No meaningful dip means no anticipation to skip.
+  const dip = startY - lowest;
+  const range = Math.max(1e-6, Math.abs(startY) * 0.02 + 0.01);
+  if (dip < range) return 0;
+
+  for (let i = lowestIndex; i < frames; i++) {
+    if (values[i * 3 + 1] >= startY) return times[i];
+  }
+  return 0;
+}
+
 /** Apply naming and root-motion cleanup in one step. */
 function prepare(clips: THREE.AnimationClip[], url: string): THREE.AnimationClip[] {
   return nameClips(clips, url).map(stripRootMotion);
