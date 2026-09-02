@@ -6,6 +6,7 @@ import * as THREE from 'three';
 import { portfolio } from '../../config/portfolio';
 import { playerState } from '../../systems/input';
 import {
+  findTakeoffTime,
   loadAllClips,
   loadModel,
   MotionState,
@@ -149,6 +150,20 @@ const Rig: React.FC<{
     return resolved;
   }, [animations, config.clips]);
 
+  /**
+   * Where in the jump clip the character actually leaves the ground, so the
+   * animation is not still crouching while physics has already launched.
+   */
+  const jumpOffset = useMemo(() => {
+    if (!clips.jump) return 0;
+    const clip = animations.find((a) => a.name === clips.jump);
+    const t = clip ? findTakeoffTime(clip) : 0;
+    if (import.meta.env.DEV && t > 0) {
+      console.info(`[portfolio] jump takeoff detected at ${t.toFixed(2)}s; skipping the crouch.`);
+    }
+    return t;
+  }, [animations, clips.jump]);
+
   /* Shadows on every mesh in the model. */
   useEffect(() => {
     cloned.traverse((child) => {
@@ -212,7 +227,9 @@ const Rig: React.FC<{
         action.reset();
         action.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat, Infinity);
         action.clampWhenFinished = once;
-        action.fadeIn(0.16).play();
+        // Start the jump at the launch frame rather than the crouch.
+        if (next === 'jump' && jumpOffset > 0) action.time = jumpOffset;
+        action.fadeIn(once ? 0.06 : 0.16).play();
       }
       if (from && actions[from] && from !== to) {
         actions[from]!.fadeOut(0.16);

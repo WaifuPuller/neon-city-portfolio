@@ -118,7 +118,13 @@ export interface InputHandlers {
  * callbacks without re-binding listeners.
  */
 export function attachInput(
-  canvas: HTMLElement,
+  /**
+   * The wrapper element, NOT the canvas. Pointer lock is requested on the
+   * <canvas> inside it, so lock state is tested by containment rather than
+   * identity - comparing the two directly meant pointerLocked was always
+   * false and mouse look never engaged at all.
+   */
+  root: HTMLElement,
   handlers: { current: InputHandlers },
   opts: { current: { sensitivity: number; invertY: boolean; enabled: boolean } },
 ) {
@@ -214,7 +220,8 @@ export function attachInput(
 
   const onPointerLockChange = () => {
     const wasLocked = input.pointerLocked;
-    input.pointerLocked = document.pointerLockElement === canvas;
+    const locked = document.pointerLockElement;
+    input.pointerLocked = !!locked && (locked === root || root.contains(locked));
 
     if (wasLocked && !input.pointerLocked) {
       clearInput();
@@ -235,7 +242,7 @@ export function attachInput(
   window.addEventListener('keyup', onKeyUp);
   window.addEventListener('blur', onBlur);
   window.addEventListener('mousemove', onMouseMove);
-  canvas.addEventListener('pointerdown', onPointerDown);
+  root.addEventListener('pointerdown', onPointerDown);
   window.addEventListener('pointermove', onPointerMove);
   window.addEventListener('pointerup', onPointerUp);
   document.addEventListener('pointerlockchange', onPointerLockChange);
@@ -245,7 +252,7 @@ export function attachInput(
     window.removeEventListener('keyup', onKeyUp);
     window.removeEventListener('blur', onBlur);
     window.removeEventListener('mousemove', onMouseMove);
-    canvas.removeEventListener('pointerdown', onPointerDown);
+    root.removeEventListener('pointerdown', onPointerDown);
     window.removeEventListener('pointermove', onPointerMove);
     window.removeEventListener('pointerup', onPointerUp);
     document.removeEventListener('pointerlockchange', onPointerLockChange);
@@ -272,15 +279,15 @@ export function markPointerLockReleasedByUser(v: boolean) {
   pointerLockReleasedByUser = v;
 }
 
-export function requestPointerLock(canvas: HTMLElement) {
+export function requestPointerLock(element: HTMLElement) {
   if (lockFailures >= MAX_LOCK_FAILURES) return;
-  if (document.pointerLockElement === canvas) return;
+  if (document.pointerLockElement === element) return;
 
   try {
     // Chrome 111+ returns a promise; older browsers return undefined. An
     // unhandled rejection would spam the console on every click in a context
     // where lock is disallowed, such as a sandboxed iframe.
-    const result = canvas.requestPointerLock() as unknown as Promise<void> | undefined;
+    const result = element.requestPointerLock() as unknown as Promise<void> | undefined;
     if (result && typeof result.catch === 'function') {
       result.then(
         () => {
