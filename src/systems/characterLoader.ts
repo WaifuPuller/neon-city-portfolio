@@ -100,57 +100,94 @@ export function stripRootMotion(clip: THREE.AnimationClip): THREE.AnimationClip 
 }
 
 
+export interface JumpTiming {
+  /** Clip time at which the feet leave the ground. */
+  takeoff: number;
+  /** Clip time at which the feet touch down again. */
+  landing: number;
+}
+
 /**
- * Time within a jump clip at which the character actually leaves the ground.
+ * Locate takeoff and touchdown inside a jump clip by following the root bone's
+ * height.
  *
- * Jump animations open with an anticipation crouch: the hips dip, then drive
- * upward. The game applies jump velocity the instant the key is pressed, so
- * playing the clip from frame zero means the character is already rising
- * through the air while still visually crouching, and only "jumps" once it is
- * on the way back down.
+ * Two problems this solves, both of which the game hits:
  *
- * Delaying the physics to match would make the controls feel unresponsive, so
- * instead the clip is started at the moment of launch. That moment is found by
- * following the root bone's height: locate the bottom of the crouch, then take
- * the first frame after it where the hips return to their resting height.
+ *  1. Jump clips open with an anticipation crouch, but jump velocity is applied
+ *     the instant the key is pressed. Playing from frame zero leaves the
+ *     character crouching while it is already rising through the air.
  *
- * Returns 0 for clips with no anticipation, which makes this a no-op rather
- * than something that needs configuring per model.
+ *  2. The clip has a fixed length, but airtime is whatever physics decides.
+ *     A clip that finishes early holds its landing pose - feet planted,
+ *     knees bent - while the body is still falling.
+ *
+ * Knowing both moments lets the airborne section be stretched to the real
+ * airtime and held there for as long as the fall lasts.
+ *
+ * Returns takeoff 0 and landing = duration when the clip has no discernible
+ * arc, which makes the whole thing a no-op rather than something to configure.
  */
-export function findTakeoffTime(clip: THREE.AnimationClip): number {
+export function analyseJump(clip: THREE.AnimationClip): JumpTiming {
+  const fallback: JumpTiming = { takeoff: 0, landing: clip.duration };
+
   const track = clip.tracks.find(
     (t) => t.name.endsWith('.position') && ROOT_BONE.test(t.name),
   ) as THREE.VectorKeyframeTrack | undefined;
-  if (!track) return 0;
+  if (!track) return fallback;
 
   const values = track.values;
   const times = track.times;
   const frames = Math.min(times.length, Math.floor(values.length / 3));
-  if (frames < 4) return 0;
+  if (frames < 4) return fallback;
 
-  const startY = values[1];
+  const y = (i: number) => values[i * 3 + 1];
+  const startY = y(0);
 
-  // Bottom of the crouch, searched over the opening portion of the clip only.
-  const searchEnd = Math.max(2, Math.floor(frames * 0.6));
-  let lowest = startY;
-  let lowestIndex = 0;
-  for (let i = 0; i < searchEnd; i++) {
-    const y = values[i * 3 + 1];
-    if (y < lowest) {
-      lowest = y;
-      lowestIndex = i;
+  // Highest point of the arc: the apex divides rise from fall.
+  let apexIndex = 0;
+  let apexY = startY;
+  for (let i = 0; i < frames; i++) {
+    if (y(i) > apexY) {
+      apexY = y(i);
+      apexIndex = i;
     }
   }
 
-  // No meaningful dip means no anticipation to skip.
-  const dip = startY - lowest;
-  const range = Math.max(1e-6, Math.abs(startY) * 0.02 + 0.01);
-  if (dip < range) return 0;
+  // No real vertical movement at all - nothing to synchronise.
+  const rise = apexY - startY;
+  const tolerance = Math.max(1e-6, Math.abs(startY) * 0.02 + 0.01);
+  if (rise < tolerance) return fallback;
 
-  for (let i = lowestIndex; i < frames; i++) {
-    if (values[i * 3 + 1] >= startY) return times[i];
+  // Takeoff: bottom of the crouch, then back up through resting height.
+  let lowest = startY;
+  let lowestIndex = 0;
+  for (let i = 0; i <= apexIndex; i++) {
+    if (y(i) < lowest) {
+      lowest = y(i);
+      lowestIndex = i;
+    }
   }
-  return 0;
+  let takeoff = 0;
+  if (startY - lowest >= tolerance) {
+    for (let i = lowestIndex; i <= apexIndex; i++) {
+      if (y(i) >= startY) {
+        takeoff = times[i];
+        break;
+      }
+    }
+  }
+
+  // Landing: after the apex, the first return to resting height.
+  let landing = clip.duration;
+  for (let i = apexIndex; i < frames; i++) {
+    if (y(i) <= startY) {
+      landing = times[i];
+      break;
+    }
+  }
+
+  if (landing <= takeoff) return fallback;
+  return { takeoff, landing };
 }
 
 /** Apply naming and root-motion cleanup in one step. */
