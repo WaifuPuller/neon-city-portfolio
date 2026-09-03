@@ -5,6 +5,7 @@ import {
   GamePhase,
   ModalId,
   ModalType,
+  NavTarget,
   QualityLevel,
   Quest,
   ThemeId,
@@ -105,6 +106,8 @@ export interface GameState {
   zones: Zone[];
   nearbyZone: Zone | null;
   teleportTarget: Vec3 | null;
+  /** Where the player has asked to be guided to; drives the ground arrows. */
+  navTarget: NavTarget | null;
   toasts: Toast[];
 
   /* actions */
@@ -131,6 +134,7 @@ export interface GameState {
   unlockAchievement: (id: string) => void;
   collectCore: (id: string) => void;
   setNearbyZone: (z: Zone | null) => void;
+  setNavTarget: (t: NavTarget | null) => void;
   teleportTo: (pos: Vec3) => void;
   clearTeleport: () => void;
   pushToast: (t: Omit<Toast, 'id'>) => void;
@@ -169,6 +173,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   zones: ZONES,
   nearbyZone: null,
   teleportTarget: null,
+  navTarget: null,
   toasts: [],
 
   /* --------------------------------------------------------------- lifecycle */
@@ -344,6 +349,22 @@ export const useGameStore = create<GameState>((set, get) => ({
     }
   },
 
+  setNavTarget: (t) => {
+    const prev = get().navTarget;
+    if (prev?.id === t?.id) return;
+
+    set({ navTarget: t });
+    if (t) {
+      audio.interact();
+      get().pushToast({
+        kind: 'quest',
+        title: 'ROUTE PLOTTED',
+        body: `Follow the arrows to ${t.name}.`,
+        icon: 'navigation',
+      });
+    }
+  },
+
   teleportTo: (pos) => {
     set({ teleportTarget: pos, activeModal: null });
   },
@@ -369,6 +390,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       collectibles: COLLECTIBLES.map((c) => ({ ...c })),
       visitedZones: [],
       nearbyZone: null,
+      navTarget: null,
       teleportTarget: [0, 1.1, 0],
     }),
 }));

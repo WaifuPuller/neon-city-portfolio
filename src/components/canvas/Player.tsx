@@ -7,9 +7,12 @@ import { castCameraRay, groundHeightAt, moveWithCollision } from '../../systems/
 import { audio } from '../../utils/audioSynth';
 import {
   ACCEL,
+  AIR_TURN_RATE,
   GRAVITY,
   JUMP_VELOCITY,
   SPRINT_SPEED,
+  steerVelocity,
+  TURN_RATE,
   WALK_SPEED,
 } from '../../systems/movement';
 import { AvatarFallback } from './AvatarFallback';
@@ -41,6 +44,9 @@ export const Player: React.FC = () => {
   const stepTimer = useRef(0);
   const facing = useRef(0);
   const camDist = useRef(CAM_DISTANCE);
+  /** Camera position relative to the player, so following costs no lag. */
+  const camOffset = useRef(new THREE.Vector3());
+  const camReady = useRef(false);
 
   useFrame((_state, rawDelta) => {
     const store = useGameStore.getState();
@@ -89,10 +95,26 @@ export const Player: React.FC = () => {
     const sprinting = controllable && input.sprint && moving;
     const targetSpeed = sprinting ? SPRINT_SPEED : WALK_SPEED;
 
-    // Reduced air control keeps jumps feeling committed.
+    /* Reduced air control keeps jumps feeling committed.
+
+       Steering rotates the momentum towards the wanted heading rather than
+       damping X and Z independently towards it. Independent damping had to
+       bleed all the way down through zero before it could build speed the
+       other way, and although that takes the same TIME at any speed, at a
+       sprint the character covers metres of ground doing it — which is why
+       turning while already sprinting felt like it did nothing, while
+       sprinting after the turn felt fine. */
     const control = grounded.current ? ACCEL : ACCEL * 0.35;
-    vel.current.x = THREE.MathUtils.damp(vel.current.x, wishX * targetSpeed, control, delta);
-    vel.current.z = THREE.MathUtils.damp(vel.current.z, wishZ * targetSpeed, control, delta);
+    [vel.current.x, vel.current.z] = steerVelocity(
+      vel.current.x,
+      vel.current.z,
+      wishX,
+      wishZ,
+      targetSpeed,
+      control,
+      grounded.current ? TURN_RATE : AIR_TURN_RATE,
+      delta,
+    );
 
     /* ---------------------------------------------------------------- jump */
     if (controllable && input.jump && !wasJumpDown.current && grounded.current) {
@@ -142,7 +164,16 @@ export const Player: React.FC = () => {
     // The avatar drives its own limbs from the shared player snapshot; all
     // this loop owns is which way the body faces and when a foot lands.
     if (moving && grounded.current) {
-      facing.current = Math.atan2(wishX, wishZ);
+      // Face the way the body is actually travelling once there is real
+      // momentum to read, so a turn shows the character leaning into the arc
+      // instead of snapping to a heading it has not reached yet. Below
+      // walking pace the velocity is too small to give a stable angle, so the
+      // requested direction is used instead.
+      const vSpeed = Math.hypot(vel.current.x, vel.current.z);
+      facing.current =
+        vSpeed > 1
+          ? Math.atan2(vel.current.x, vel.current.z)
+          : Math.atan2(wishX, wishZ);
 
       stepTimer.current -= delta;
       if (stepTimer.current <= 0) {
@@ -179,16 +210,44 @@ export const Player: React.FC = () => {
       );
       camDist.current = THREE.MathUtils.damp(camDist.current, wanted, 9, delta);
 
+      /* Where the camera wants to sit RELATIVE to the player. */
       _camTarget.set(
-        pos.current.x + dirX * camDist.current,
-        pos.current.y + CAM_HEIGHT + Math.sin(pitch.current) * camDist.current * 0.85,
-        pos.current.z + dirZ * camDist.current,
+        dirX * camDist.current,
+        CAM_HEIGHT + Math.sin(pitch.current) * camDist.current * 0.85,
+        dirZ * camDist.current,
       );
-      // Never let the camera clip below the street or a rooftop.
-      const camFloor = groundHeightAt(_camTarget.x, _camTarget.z) + 0.8;
-      if (_camTarget.y < camFloor) _camTarget.y = camFloor;
 
-      camera.position.lerp(_camTarget, Math.min(1, delta * 11));
+      /* Smooth the OFFSET, never the world position.
+       *
+       * Easing the world position towards a target that is itself running
+       * away at the player's speed leaves a permanent lag of speed/rate
+       * metres: about 0.7m at a walk but 1.2m at a sprint. Turning then swings
+       * the camera through a wide arc it can never catch up with, so the
+       * faster you were going the less the view appeared to answer the mouse —
+       * which is exactly "it will not change direction while sprinting", while
+       * turning first and then sprinting felt fine.
+       *
+       * Anchoring to the player removes the speed term entirely: the camera
+       * responds identically at a standstill and at a full sprint, and only
+       * the orbit around the player is eased. */
+      if (!camReady.current) {
+        camOffset.current.copy(_camTarget);
+        camReady.current = true;
+      } else {
+        camOffset.current.x = THREE.MathUtils.damp(camOffset.current.x, _camTarget.x, 16, delta);
+        camOffset.current.y = THREE.MathUtils.damp(camOffset.current.y, _camTarget.y, 16, delta);
+        camOffset.current.z = THREE.MathUtils.damp(camOffset.current.z, _camTarget.z, 16, delta);
+      }
+
+      camera.position.set(
+        pos.current.x + camOffset.current.x,
+        pos.current.y + camOffset.current.y,
+        pos.current.z + camOffset.current.z,
+      );
+
+      // Never let the camera clip below the street or a rooftop.
+      const camFloor = groundHeightAt(camera.position.x, camera.position.z) + 0.8;
+      if (camera.position.y < camFloor) camera.position.y = camFloor;
 
       _lookAt.set(
         pos.current.x - forwardVec.x * 1.4,
