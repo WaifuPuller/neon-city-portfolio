@@ -14,12 +14,15 @@ import {
   ChevronLeft,
   Zap,
   MousePointer2,
+  Navigation,
+  X,
 } from 'lucide-react';
 import { useGameStore, selectActiveQuest, selectCoreCount, xpForLevel, THEMES } from '../../store/useGameStore';
 import { portfolio } from '../../config/portfolio';
 import { Minimap } from './Minimap';
 import { audio } from '../../utils/audioSynth';
 import { input, playerState } from '../../systems/input';
+import { navState } from '../../systems/navState';
 
 /** Lightweight frame counter that never re-renders the rest of the HUD. */
 const FpsMeter: React.FC = () => {
@@ -57,17 +60,58 @@ const FpsMeter: React.FC = () => {
 const StatusChips: React.FC<{ touch: boolean }> = ({ touch }) => {
   const [sprinting, setSprinting] = useState(false);
   const [locked, setLocked] = useState(false);
+  const [remaining, setRemaining] = useState(0);
+
+  const navTarget = useGameStore((s) => s.navTarget);
+  const setNavTarget = useGameStore((s) => s.setNavTarget);
 
   useEffect(() => {
     const id = window.setInterval(() => {
       setSprinting(input.sprint && playerState.speed > 1);
       setLocked(input.pointerLocked);
+      // Route length is recomputed on the render loop; round it here so the
+      // badge is not re-rendering on every centimetre walked.
+      setRemaining(Math.round(navState.remaining));
     }, 100);
     return () => window.clearInterval(id);
   }, []);
 
   return (
     <div className="pointer-events-none absolute inset-x-0 top-20 flex flex-col items-center gap-2 px-4 sm:top-24">
+      {/* Active route. Sits with the other transient chips so it never fights
+          the objective panel for the corner. */}
+      <AnimatePresence>
+        {navTarget && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            className="glass-strong clip-tag pointer-events-auto flex items-center gap-2.5 py-1.5 pl-3 pr-1.5"
+            style={{ borderColor: `${navTarget.color}70` }}
+          >
+            <Navigation className="h-3 w-3 shrink-0" style={{ color: navTarget.color }} />
+            <span
+              className="max-w-[38vw] truncate font-display text-[10px] font-black tracking-[0.16em] sm:max-w-none"
+              style={{ color: navTarget.color }}
+            >
+              {navTarget.name}
+            </span>
+            <span className="font-mono text-[10px] tabular-nums text-slate-400">{remaining}m</span>
+            <button
+              onClick={() => {
+                audio.uiClick();
+                setNavTarget(null);
+              }}
+              aria-label="Stop navigating"
+              title="Stop navigating"
+              className="rounded p-1 text-slate-500 transition hover:text-white"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <AnimatePresence>
         {sprinting && (
           <motion.div
@@ -399,13 +443,22 @@ export const HUD: React.FC<{ touch: boolean }> = ({ touch }) => {
 
           {/* --------------------------------------------------- BOTTOM RIGHT */}
           <div className="pointer-events-auto absolute bottom-3 right-3 hidden sm:bottom-5 sm:right-5 md:block">
-            <Minimap />
-            <div className="glass clip-tag mt-2 flex items-center justify-center gap-2 px-3 py-2 font-mono text-[10px] text-slate-400">
+            <Minimap onExpand={() => openModal('map')} />
+            <div className="glass clip-tag mt-2 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 px-3 py-2 font-mono text-[10px] text-slate-400">
               <span className="kbd">WASD</span> move
               <span className="kbd">SHIFT</span> run
               <span className="kbd">SPACE</span> jump
+              <span className="kbd">M</span> map
             </div>
           </div>
+
+          {/* Touch layouts get their own small radar, tapped to open the full
+              map. It sits above the look surface, which is a z-20 layer. */}
+          {touch && (
+            <div className="pointer-events-auto absolute right-3 top-[6.5rem] md:hidden">
+              <Minimap size={104} onExpand={() => openModal('map')} />
+            </div>
+          )}
         </motion.div>
       )}
     </AnimatePresence>

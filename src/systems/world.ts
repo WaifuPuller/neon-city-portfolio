@@ -43,6 +43,7 @@ interface ZoneTemplate extends Omit<Zone, 'position'> {
 const TEMPLATES: ZoneTemplate[] = [
   {
     id: 'ai-lab',
+    short: 'AI LAB',
     name: 'AI RESEARCH LAB',
     subtitle: 'Featured Work',
     radius: 5.2,
@@ -57,6 +58,7 @@ const TEMPLATES: ZoneTemplate[] = [
   },
   {
     id: 'profile',
+    short: 'PROFILE',
     name: 'OPERATOR PROFILE',
     subtitle: 'About Me',
     radius: 5,
@@ -71,6 +73,7 @@ const TEMPLATES: ZoneTemplate[] = [
   },
   {
     id: 'skills',
+    short: 'SKILLS',
     name: 'SKILL MATRIX',
     subtitle: 'Capabilities',
     radius: 5,
@@ -83,6 +86,7 @@ const TEMPLATES: ZoneTemplate[] = [
   },
   {
     id: 'experience',
+    short: 'CAREER',
     name: 'CAREER TIMELINE',
     subtitle: 'Experience',
     radius: 5,
@@ -95,6 +99,7 @@ const TEMPLATES: ZoneTemplate[] = [
   },
   {
     id: 'credentials',
+    short: 'AWARDS',
     name: 'ACHIEVEMENT HALL',
     subtitle: 'Certifications',
     radius: 5,
@@ -107,6 +112,7 @@ const TEMPLATES: ZoneTemplate[] = [
   },
   {
     id: 'resume',
+    short: 'RESUME',
     name: 'DATA TERMINAL',
     subtitle: 'Resume & Links',
     radius: 5,
@@ -119,6 +125,7 @@ const TEMPLATES: ZoneTemplate[] = [
   },
   {
     id: 'contact',
+    short: 'CONTACT',
     name: 'COMMS TOWER',
     subtitle: 'Contact',
     radius: 5.5,
@@ -133,6 +140,7 @@ const TEMPLATES: ZoneTemplate[] = [
   },
   {
     id: 'arcade',
+    short: 'ARCADE',
     name: 'ARCADE CABINET',
     subtitle: 'Mini-Game',
     radius: 3.6,
@@ -146,6 +154,7 @@ const TEMPLATES: ZoneTemplate[] = [
   },
   {
     id: 'vault',
+    short: 'VAULT',
     name: 'THE VAULT',
     subtitle: 'Secret Area',
     radius: 5,

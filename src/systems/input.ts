@@ -108,6 +108,8 @@ export interface InputHandlers {
   onInteract?: () => void;
   onPause?: () => void;
   onConsole?: () => void;
+  /** Toggle the full-screen city map (M). */
+  onMap?: () => void;
   /** Fired when the browser drops pointer lock (Esc, Alt, tab switch). */
   onPointerLockLost?: () => void;
 }
@@ -149,22 +151,34 @@ export function attachInput(
       return;
     }
 
-    // Always allow escape and the console key, even when input is disabled.
+    // Escape works everywhere, including inside the contact form.
     if (code === 'escape') {
       handlers.current.onPause?.();
       return;
     }
+
+    // Never eat keystrokes while the visitor is typing in a form. This has to
+    // come BEFORE the shortcut keys: 'm' is an ordinary letter, and opening
+    // the world map every time someone types it into the contact message
+    // would be maddening.
+    const el = document.activeElement;
+    if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT')) {
+      return;
+    }
+
+    // Panels that toggle, and so must keep working while they are open (when
+    // `enabled` is false because a modal has the screen).
     if (code === 'backquote') {
       e.preventDefault();
       handlers.current.onConsole?.();
       return;
     }
-
-    // Never eat keystrokes while the visitor is typing in a form.
-    const el = document.activeElement;
-    if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT')) {
+    if (code === 'keym') {
+      e.preventDefault();
+      handlers.current.onMap?.();
       return;
     }
+
     if (!opts.current.enabled) return;
 
     if (code === 'space') e.preventDefault();

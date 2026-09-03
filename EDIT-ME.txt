@@ -410,6 +410,18 @@ THE GAME RUNS SLOWLY ON MY MACHINE
 HOW DO I CHANGE THE BROWSER TAB TITLE?
     Open  index.html  and edit the <title> line near the top.
 
+THE NAMES ON THE MAP ARE TOO LONG / I WANT DIFFERENT ONES
+    The big map uses the landmark's full name. The little corner radar uses a
+    short version, because a long one does not fit.
+
+    Both live in src/systems/world.ts . Find the landmark you want and edit:
+
+        name:  'AI RESEARCH LAB',      <- shown on the big map and in the city
+        short: 'AI LAB',               <- shown on the corner radar
+
+    Keep "short" to about eight characters or it will be skipped to avoid
+    overlapping its neighbours.
+
 HOW DO I CHANGE THE HIDDEN COLLECTIBLES?
     src/systems/world.ts , find COLLECTIBLES. The numbers are positions:
     [left/right, height, forward/back].
@@ -435,6 +447,7 @@ HOW DO I PUT IT ONLINE?
     Shift ............... sprint - a SPRINTING badge appears when it is on
     Space ............... jump
     E ................... open the thing you are standing at
+    M ................... open / close the full city map
     Esc ................. pause menu (Resume / Settings / Restart / Main Menu)
     ` (backtick) ........ developer terminal, type "help"
 
@@ -442,6 +455,27 @@ The objective panel in the bottom-left shows itself when the objective
 changes, then folds into a small tab. Click the tab to open it again.
 
 On phones a joystick, jump and sprint buttons appear instead. Drag the right
-side of the screen to look around.
+side of the screen to look around. Tap the small radar on the right-hand side
+to open the full map.
+
+
+THE MAP AND FINDING YOUR WAY
+----------------------------
+
+    Press M (or tap the radar on a phone) to open the city map. It lists every
+    landmark and every data core you have not picked up yet, with how far away
+    each one is.
+
+    Pick one and press NAVIGATE. The map closes and a line of glowing arrows
+    appears on the street showing the way. The arrows route AROUND the
+    buildings - they never point through one - and they redraw themselves if
+    you wander off or take a different street.
+
+    The badge at the top of the screen shows where you are heading and how far
+    is left. Press the small x on it, or STOP on the map, to cancel.
+    The arrows disappear on their own when you arrive.
+
+    Nothing here needs configuring. Landmarks come from your own content in
+    portfolio.ts, so the map always lists exactly what your city contains.
 
 ===============================================================================

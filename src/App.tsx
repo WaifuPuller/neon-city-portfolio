@@ -12,6 +12,7 @@ import { Toasts } from './components/ui/Toasts';
 import { TouchControls } from './components/ui/TouchControls';
 import { PauseMenu, SettingsModal } from './components/ui/PauseMenu';
 import { Console } from './components/ui/Console';
+import { WorldMap } from './components/ui/WorldMap';
 
 import { ModalRoot } from './components/modals/ModalRoot';
 
@@ -100,6 +101,12 @@ export const App: React.FC = () => {
       if (s.phase !== 'PLAYING') return;
       if (s.activeModal === 'console') s.closeModal();
       else if (!s.activeModal) s.openModal('console');
+    },
+    onMap: () => {
+      const s = useGameStore.getState();
+      if (s.phase !== 'PLAYING') return;
+      if (s.activeModal === 'map') s.closeModal();
+      else if (!s.activeModal) s.openModal('map');
     },
     /**
      * The browser eats the Esc keydown that exits pointer lock, so the key
@@ -209,6 +216,7 @@ export const App: React.FC = () => {
         <AnimatePresence mode="wait">
           {activeModal === 'settings' && <SettingsModal key="settings" />}
           {activeModal === 'console' && <Console key="console" />}
+          {activeModal === 'map' && <WorldMap key="map" />}
         </AnimatePresence>
         <ModalRoot />
       </div>

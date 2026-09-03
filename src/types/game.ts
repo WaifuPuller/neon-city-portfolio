@@ -12,7 +12,8 @@ export type ModalId =
   | 'arcade'
   | 'settings'
   | 'console'
-  | 'achievements';
+  | 'achievements'
+  | 'map';
 
 export type ModalType = ModalId | null;
 
@@ -33,6 +34,8 @@ export interface Zone {
   color: string;
   modal: ModalId;
   prompt: string;
+  /** Two-word label for the corner radar, where the full name will not fit. */
+  short: string;
   /** Short title shown in the quest log, e.g. "Enter the AI Lab". */
   questTitle: string;
   /** One-line direction shown under the quest title. */
@@ -76,4 +79,12 @@ export interface Collider {
   hd: number;
   /** Top surface height, so the player can stand on it. */
   top: number;
+}
+
+/** Somewhere the player has asked to be guided to. */
+export interface NavTarget {
+  id: string;
+  name: string;
+  position: Vec3;
+  color: string;
 }

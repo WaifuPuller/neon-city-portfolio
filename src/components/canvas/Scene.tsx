@@ -6,6 +6,7 @@ import * as THREE from 'three';
 import { NeonCity } from './NeonCity';
 import { Landmarks } from './Landmarks';
 import { Player } from './Player';
+import { NavPath } from './NavPath';
 import { CinematicIntro } from './CinematicIntro';
 import { AdaptiveQuality } from './AdaptiveQuality';
 import { useGameStore, THEMES } from '../../store/useGameStore';
@@ -159,6 +160,7 @@ export const Scene: React.FC<{ onCaption: (c: string | null) => void }> = ({ onC
       />
       <LabHolograms />
       <Landmarks />
+      <NavPath />
       <Player />
       <CinematicIntro onCaption={onCaption} />
       <AdaptiveQuality />
