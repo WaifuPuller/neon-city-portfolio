@@ -441,7 +441,10 @@ HOW DO I PUT IT ONLINE?
 ===============================================================================
 
     Click the view ...... captures the mouse so it steers the camera
-    ALT ................. releases the mouse so you can click buttons
+    (just walking) ...... pressing W A S D also captures it, so the mouse
+                          steers from the first step without clicking first
+    ALT ................. releases the mouse so you can click buttons.
+                          Walking will NOT take it back until you click.
     W A S D or arrows ... walk
     Mouse ............... look around (once captured)
     Shift ............... sprint - a SPRINTING badge appears when it is on

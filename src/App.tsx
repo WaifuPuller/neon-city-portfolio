@@ -17,7 +17,13 @@ import { WorldMap } from './components/ui/WorldMap';
 import { ModalRoot } from './components/modals/ModalRoot';
 
 import { useGameStore } from './store/useGameStore';
-import { attachInput, clearInput, exitPointerLock, requestPointerLock } from './systems/input';
+import {
+  attachInput,
+  clearInput,
+  exitPointerLock,
+  markCursorFreed,
+  requestPointerLock,
+} from './systems/input';
 import { hasWebGL, isTouchDevice } from './utils/device';
 import { audio } from './utils/audioSynth';
 import { useViewportFit } from './hooks/useViewportFit';
@@ -108,6 +114,14 @@ export const App: React.FC = () => {
       if (s.activeModal === 'map') s.closeModal();
       else if (!s.activeModal) s.openModal('map');
     },
+    /* Starting to walk is as good a signal as a click that the visitor wants
+       the mouse captured, and a keystroke is a user gesture so the browser
+       will allow it. */
+    onRequestCapture: () => {
+      const s = useGameStore.getState();
+      if (touch || s.phase !== 'PLAYING' || s.activeModal) return;
+      if (canvasRef.current) requestPointerLock(canvasRef.current);
+    },
     /**
      * The browser eats the Esc keydown that exits pointer lock, so the key
      * handler never fires and the pause menu would never open once the mouse
@@ -145,6 +159,26 @@ export const App: React.FC = () => {
     if (s.phase !== 'PLAYING' || s.activeModal) return;
     if (canvasRef.current) requestPointerLock(canvasRef.current);
   }, [touch]);
+
+  /**
+   * Take the mouse the moment play begins.
+   *
+   * The intro releases pointer lock on its way past, so without this nobody
+   * holds it when the city appears and the mouse silently does nothing until
+   * the visitor happens to click. The click that started the game may still
+   * count as a live user gesture here, in which case this alone fixes it;
+   * when it does not, the browser refuses and the first movement key picks it
+   * up instead. Marked speculative so a refusal is not held against the
+   * retry budget.
+   */
+  useEffect(() => {
+    if (touch || phase !== 'PLAYING' || activeModal !== null) return;
+    markCursorFreed(false);
+    const id = window.setTimeout(() => {
+      if (canvasRef.current) requestPointerLock(canvasRef.current, true);
+    }, 60);
+    return () => window.clearTimeout(id);
+  }, [phase, activeModal, touch]);
 
   /* Pause automatically when the tab loses focus, so nobody comes back to a
      character that has been sprinting into a wall for five minutes. */
