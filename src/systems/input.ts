@@ -31,6 +31,21 @@ export const input: InputState = {
 
 const keys = new Set<string>();
 
+/** Keys that mean "I am playing now", used to capture the mouse. */
+const MOVEMENT_KEYS = new Set([
+  'keyw', 'keya', 'keys', 'keyd',
+  'arrowup', 'arrowdown', 'arrowleft', 'arrowright',
+  'space',
+]);
+
+/**
+ * True while the visitor has deliberately freed the cursor with Alt.
+ *
+ * Without this the auto-capture above would take the mouse straight back on
+ * the next step, which is the exact opposite of what Alt is for.
+ */
+let cursorFreed = false;
+
 /** Set by the touch pad component; overrides keyboard when non-zero. */
 export const touch = { forward: 0, strafe: 0, active: false };
 
@@ -110,6 +125,12 @@ export interface InputHandlers {
   onConsole?: () => void;
   /** Toggle the full-screen city map (M). */
   onMap?: () => void;
+  /**
+   * Fired when the visitor starts moving without the mouse being captured.
+   * A keystroke counts as a user gesture, so pointer lock can be requested
+   * from it - see the note on MOVEMENT_KEYS.
+   */
+  onRequestCapture?: () => void;
   /** Fired when the browser drops pointer lock (Esc, Alt, tab switch). */
   onPointerLockLost?: () => void;
 }
@@ -147,6 +168,7 @@ export function attachInput(
       // not pause the game - the whole point of Alt is to free the cursor
       // while play continues.
       pointerLockReleasedByUser = true;
+      cursorFreed = true;
       exitPointerLock();
       return;
     }
@@ -187,6 +209,22 @@ export function attachInput(
     keys.add(code);
     recompute();
 
+    /* Grab the mouse as soon as the visitor starts walking.
+     *
+     * Pointer lock can only be requested from a user gesture, and the only
+     * one the game used to take was a click on the canvas. But the intro
+     * releases the mouse on its way past, so after it finished nobody held
+     * the lock: the natural thing to do next is press W, walk off, and then
+     * discover that the mouse does not turn the camera at all until you
+     * happen to click. A keystroke is a user gesture too, so starting to
+     * move is treated as "I would like to play now".
+     *
+     * Skipped when the cursor was freed deliberately with Alt, which would
+     * otherwise snatch it straight back. */
+    if (!alreadyDown && MOVEMENT_KEYS.has(code) && !input.pointerLocked && !cursorFreed) {
+      handlers.current.onRequestCapture?.();
+    }
+
     if (code === 'space' && !alreadyDown) handlers.current.onJumpPressed?.();
     if (code === 'keye' && !alreadyDown) handlers.current.onInteract?.();
   };
@@ -216,6 +254,8 @@ export function attachInput(
   const onPointerDown = (e: PointerEvent) => {
     if (!opts.current.enabled) return;
     if (e.pointerType === 'touch') return; // handled by the touch look pad
+    // Clicking back into the view means they want the mouse captured again.
+    cursorFreed = false;
     dragging = true;
     lastX = e.clientX;
     lastY = e.clientY;
@@ -286,6 +326,17 @@ export function attachInput(
 let lockFailures = 0;
 const MAX_LOCK_FAILURES = 4;
 
+/**
+ * Forget (or force) a deliberate Alt release.
+ *
+ * Cleared when play starts or resumes: freeing the cursor is a request about
+ * the moment, not a standing preference, and someone who has just pressed
+ * Resume plainly wants to play.
+ */
+export function markCursorFreed(v: boolean) {
+  cursorFreed = v;
+}
+
 /** Set by the Alt handler so releasing the mouse does not also pause. */
 export let pointerLockReleasedByUser = false;
 
@@ -293,7 +344,7 @@ export function markPointerLockReleasedByUser(v: boolean) {
   pointerLockReleasedByUser = v;
 }
 
-export function requestPointerLock(element: HTMLElement) {
+export function requestPointerLock(element: HTMLElement, speculative = false) {
   if (lockFailures >= MAX_LOCK_FAILURES) return;
   if (document.pointerLockElement === element) return;
 
@@ -308,7 +359,10 @@ export function requestPointerLock(element: HTMLElement) {
           lockFailures = 0;
         },
         () => {
-          lockFailures += 1;
+          // A speculative attempt - one made without a fresh click behind it -
+          // is EXPECTED to be refused sometimes, so it must not count towards
+          // giving up permanently.
+          if (!speculative) lockFailures += 1;
         },
       );
     } else {
@@ -316,7 +370,7 @@ export function requestPointerLock(element: HTMLElement) {
     }
   } catch {
     // Safari and sandboxed iframes throw synchronously instead.
-    lockFailures += 1;
+    if (!speculative) lockFailures += 1;
   }
 }
 
