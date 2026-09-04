@@ -248,6 +248,41 @@ Whatever you write here only appears after someone finds all 5 hidden Data
 Cores in the city. A personal note, a thank-you, anything you like.
 
 
+--- YOUR OWN IMAGES (on the buildings, and on the spaceship) -------------------
+
+    These do NOT go in portfolio.ts. They have their own folder:
+
+        src/assets/images/
+
+    Drop files in, save, done. No paths to type, no code to edit.
+
+        building-01.jpg  ... up to ...  building-10.jpg
+              Each becomes a glowing panel that slowly circles one of the
+              towers. They are spread along the route you walk, and met in
+              number order, so building-01 is the first one you pass.
+
+        orbiter.jpg
+              The banner carried by the ship that circles outside the map.
+
+    .jpg .jpeg .png and .webp all work, and you can mix them. Add one file or
+    ten - whatever is in the folder is what shows up, and empty slots simply
+    do not exist. Use the two-digit numbers (01, not 1) or building-10 will
+    sort before building-2.
+
+    Keep them around 1024 pixels or smaller. Graphics memory is used up by an
+    image's DIMENSIONS, not its file size, so a huge photo is what makes
+    phones stutter even when the file looks small.
+
+    There is a fuller note in  src/assets/images/README.txt .
+
+    To change how they BEHAVE - building colours, whether the panels circle
+    the towers or stay put, and the ship's size, speed, height and shape -
+    open  src/config/media.ts . Every setting in there is commented.
+
+    To turn the ship off entirely, set  enabled: false  in that file. To make
+    it a drifting rock instead, set  kind: 'asteroid' .
+
+
 --- THE SETTING (space station or neon city) ----------------------------------
 
     Find  world:  in portfolio.ts and change the one word:
