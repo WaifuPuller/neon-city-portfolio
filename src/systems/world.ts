@@ -1,5 +1,6 @@
 import { Collider, Vec3, Zone, Collectible } from '../types/game';
 import { has, portfolio } from '../config/portfolio';
+import { buildingPalette } from '../config/media';
 
 /* ---------------------------------------------------------------------------
  * Deterministic, content-driven world generation.
@@ -207,7 +208,9 @@ export interface Building {
   spire: number;
 }
 
-const NEON = ['#22d3ee', '#f472b6', '#a855f7', '#34d399', '#fbbf24'];
+/* Tower colours are owner-editable, in src/config/media.ts. Falling back to a
+   sane palette matters because an empty list would make every building black. */
+const NEON = buildingPalette.length > 0 ? buildingPalette : ['#22d3ee', '#f472b6', '#a855f7'];
 
 /** The plaza is kept clear so the player always has somewhere to spawn. */
 const PLAZA_RADIUS = 13;

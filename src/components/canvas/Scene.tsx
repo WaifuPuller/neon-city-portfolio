@@ -5,6 +5,8 @@ import { EffectComposer, Bloom, Vignette } from '@react-three/postprocessing';
 import * as THREE from 'three';
 import { NeonCity } from './NeonCity';
 import { SpaceStation } from './SpaceStation';
+import { BuildingScreens } from './BuildingScreens';
+import { Orbiter } from './Orbiter';
 import { Landmarks } from './Landmarks';
 import { Player } from './Player';
 import { NavPath } from './NavPath';
@@ -182,6 +184,11 @@ export const Scene: React.FC<{ onCaption: (c: string | null) => void }> = ({ onC
         />
       )}
       <LabHolograms />
+      {/* The owner's own pictures: panels on the towers, and a banner on the
+          craft circling outside the map. Both render nothing at all until
+          images are dropped into src/assets/images/. */}
+      <BuildingScreens accent={palette.accent} />
+      <Orbiter primary={palette.primary} accent={palette.accent} />
       <Landmarks />
       <NavPath />
       <Player />
