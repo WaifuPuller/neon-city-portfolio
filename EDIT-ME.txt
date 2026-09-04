@@ -248,6 +248,28 @@ Whatever you write here only appears after someone finds all 5 hidden Data
 Cores in the city. A personal note, a thank-you, anything you like.
 
 
+--- THE SETTING (space station or neon city) ----------------------------------
+
+    Find  world:  in portfolio.ts and change the one word:
+
+        world: {
+          setting: 'space-station',      <- an orbital hangar deck, stars above
+        },
+
+    The two choices are:
+
+        'space-station'   plated deck, station modules, drifting dust, open
+                          space and a distant sun overhead
+        'neon-city'       rain-soaked street at night, neon towers, wet grid
+
+    This changes the SCENERY ONLY. Your content, the landmarks, the layout,
+    the map, the navigation arrows, the character and every objective are
+    identical either way - so switch back and forth as often as you like and
+    nothing is lost.
+
+    The neon theme colours (ESC -> SETTINGS) still apply to both.
+
+
 --- THE OPENING CINEMATIC -----------------------------------------------------
 
 Find:  intro: {

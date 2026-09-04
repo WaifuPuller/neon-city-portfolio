@@ -4,6 +4,7 @@ import { Html } from '@react-three/drei';
 import { EffectComposer, Bloom, Vignette } from '@react-three/postprocessing';
 import * as THREE from 'three';
 import { NeonCity } from './NeonCity';
+import { SpaceStation } from './SpaceStation';
 import { Landmarks } from './Landmarks';
 import { Player } from './Player';
 import { NavPath } from './NavPath';
@@ -11,7 +12,7 @@ import { CinematicIntro } from './CinematicIntro';
 import { AdaptiveQuality } from './AdaptiveQuality';
 import { useGameStore, THEMES } from '../../store/useGameStore';
 import { QUALITY_PROFILES } from '../../utils/device';
-import { portfolio } from '../../config/portfolio';
+import { portfolio, worldSetting } from '../../config/portfolio';
 import { projectAccent } from '../../utils/accent';
 
 /* ---------------------------------------------------------------------------
@@ -105,18 +106,25 @@ const Lighting: React.FC<{ shadows: boolean; primary: string; accent: string }> 
 }) => {
   const key = useRef<THREE.DirectionalLight>(null);
 
+  /* In orbit the key light is the sun drawn in the sky shader, so it has to
+     come from the same direction or the shadows point the wrong way. Vacuum
+     also means almost no bounce, hence the much weaker fill - the coloured rim
+     lights below do the work the city's smog used to do. */
+  const station = worldSetting === 'space-station';
+  const keyPos: [number, number, number] = station ? [82, 30, -99] : [38, 60, -20];
+
   return (
     <>
-      <ambientLight intensity={0.45} color="#243352" />
-      <hemisphereLight args={['#1b2a5a', '#05060e', 0.7]} />
+      <ambientLight intensity={station ? 0.26 : 0.45} color={station ? '#1b2438' : '#243352'} />
+      <hemisphereLight args={[station ? '#16224a' : '#1b2a5a', '#05060e', station ? 0.45 : 0.7]} />
       {/* The key light stays close to neutral. Tinting it with the theme
           colour looked good on the grey buildings but wrecked the character's
           skin and clothing — a cyan key over an orange model reads as green. */}
       <directionalLight
         ref={key}
-        position={[38, 60, -20]}
-        intensity={1.5}
-        color="#e8f0ff"
+        position={keyPos}
+        intensity={station ? 2.1 : 1.5}
+        color={station ? '#fff2df' : '#e8f0ff'}
         castShadow={shadows}
         shadow-mapSize={[1024, 1024]}
         shadow-camera-near={1}
@@ -147,17 +155,32 @@ export const Scene: React.FC<{ onCaption: (c: string | null) => void }> = ({ onC
 
   return (
     <>
-      <fog attach="fog" args={['#06070f', 26, profile.fogFar]} />
+      {/* Vacuum is clear, so the station keeps only enough haze to hide the far
+          edge of the deck; the city keeps its heavy rain-soaked murk. */}
+      {worldSetting === 'space-station' ? (
+        <fog attach="fog" args={['#070910', 46, profile.fogFar * 1.35]} />
+      ) : (
+        <fog attach="fog" args={['#06070f', 26, profile.fogFar]} />
+      )}
       <color attach="background" args={['#05060e']} />
 
       <Lighting shadows={profile.shadows} primary={palette.primary} accent={palette.accent} />
 
-      <NeonCity
-        profile={profile}
-        primary={palette.primary}
-        accent={palette.accent}
-        glow={palette.secondary}
-      />
+      {worldSetting === 'space-station' ? (
+        <SpaceStation
+          profile={profile}
+          primary={palette.primary}
+          accent={palette.accent}
+          glow={palette.secondary}
+        />
+      ) : (
+        <NeonCity
+          profile={profile}
+          primary={palette.primary}
+          accent={palette.accent}
+          glow={palette.secondary}
+        />
+      )}
       <LabHolograms />
       <Landmarks />
       <NavPath />
