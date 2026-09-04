@@ -21,6 +21,9 @@
  * just gets a generic link icon, so you can never break the site by adding
  * something unexpected.
  */
+/** The scenery packs that ship with the game. See `world` below. */
+export type WorldSetting = 'neon-city' | 'space-station';
+
 export type SocialPlatform =
   | 'github'
   | 'linkedin'
@@ -335,6 +338,21 @@ export const portfolio = {
    * named after their FILENAME instead: Running.fbx becomes the "run" state.
    * Keep the filenames descriptive and it maps itself.
    * ------------------------------------------------------------------------- */
+  /* ----------------------------------------------------------------- WORLD ---
+   * Where the whole thing is set.
+   *
+   *   'space-station'  an orbital hangar deck, open space and stars overhead
+   *   'neon-city'      a rain-soaked cyberpunk street at night
+   *
+   * This changes the SCENERY ONLY. The layout, your content, the landmarks,
+   * the map and the navigation arrows are all identical either way, so you can
+   * switch back and forth freely to see which you prefer. Change the one word
+   * below and save.
+   * -------------------------------------------------------------------------- */
+  world: {
+    setting: 'space-station' as WorldSetting,
+  },
+
   character: {
     /**
      * The character mesh. Leave as '' to use the built-in blocky avatar.
@@ -385,6 +403,9 @@ export type Portfolio = typeof portfolio;
 /* --------------------------------------------------------------- DERIVED ---
  * Convenience flags used to decide which landmarks exist in the city.
  * ------------------------------------------------------------------------- */
+
+/** The two scenery packs that ship with the game. */
+export const worldSetting: WorldSetting = portfolio.world.setting;
 
 export const has = {
   about: portfolio.about.paragraphs.length > 0,
