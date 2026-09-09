@@ -6,6 +6,8 @@ import * as THREE from 'three';
 import { NeonCity } from './NeonCity';
 import { SpaceStation } from './SpaceStation';
 import { AncientRuins } from './AncientRuins';
+import { Battleground } from './Battleground';
+import { LanternDistrict } from './LanternDistrict';
 import { BuildingScreens } from './BuildingScreens';
 import { Orbiter } from './Orbiter';
 import { Landmarks } from './Landmarks';
@@ -170,6 +172,8 @@ const ENVIRONMENTS: Record<WorldId, React.FC<EnvironmentProps>> = {
   'neon-city': NeonCity,
   'space-station': SpaceStation,
   'ancient-ruins': AncientRuins,
+  'lantern-district': LanternDistrict,
+  battleground: Battleground,
 };
 
 /* ========================================================================= */

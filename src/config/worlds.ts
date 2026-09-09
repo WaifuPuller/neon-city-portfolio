@@ -15,7 +15,12 @@ import type { Vec3 } from '../types/game';
  *  below, and register it in Scene.tsx. Nothing else needs to know.
  * ========================================================================== */
 
-export type WorldId = 'neon-city' | 'space-station' | 'ancient-ruins';
+export type WorldId =
+  | 'neon-city'
+  | 'space-station'
+  | 'ancient-ruins'
+  | 'lantern-district'
+  | 'battleground';
 
 export interface WorldDefinition {
   id: WorldId;
@@ -112,6 +117,51 @@ export const WORLDS: WorldDefinition[] = [
       ambientIntensity: 0.5,
       ambientColor: '#6b5137',
       hemisphere: ['#c98f52', '#241708', 0.65],
+    },
+  },
+  {
+    id: 'lantern-district',
+    name: 'LANTERN DISTRICT',
+    tagline: 'Back streets, warm light, falling petals',
+    description:
+      'A narrow shopping street after closing. Paper lanterns strung overhead, vending machines humming in the dark, shop banners hanging down the walls, and blossom coming off the trees onto wet asphalt.',
+    swatch: ['#0d0812', '#e2564a', '#ffd6a5'],
+    fog: { color: '#120a14', near: 22, farScale: 0.9 },
+    light: {
+      // Low and warm, as if it were all coming from the shopfronts.
+      keyPosition: [24, 34, 40],
+      keyIntensity: 1.25,
+      keyColor: '#ffe0c2',
+      ambientIntensity: 0.5,
+      ambientColor: '#3a2233',
+      hemisphere: ['#4a2a3a', '#0b0710', 0.75],
+    },
+  },
+  {
+    id: 'battleground',
+    name: 'THE DROP ZONE',
+    tagline: 'Abandoned compound, closing circle',
+    description:
+      'A disused military settlement under a flat grey sky. Concrete blocks and corrugated roofs, supply crates left where they fell, watchtowers over dry grass, and the containment wall drawing in around the edge of the map.',
+    swatch: ['#22261a', '#7d8c5f', '#cfc9a4'],
+    // Dust and distance haze, the thickest of the five.
+    fog: { color: '#8a8b76', near: 30, farScale: 1.1 },
+    light: {
+      /* High and near-white: overcast daylight, which is the light this kind
+         of place is always shot in. Very strong fill, because an overcast sky
+         is one enormous soft source and almost nothing sits in true shadow. */
+      /* Overcast is FILL-dominant, not key-dominant: the cloud layer is one
+         huge soft source, so almost all the light arrives from everywhere at
+         once and very little of it comes straight down a beam. Lighting it
+         like sunshine - a strong key over a bright concrete albedo - drives
+         the compounds to flat white, which is the failure mode for this kind
+         of scene. Weak key, heavy ambient and hemisphere. */
+      keyPosition: [40, 88, 30],
+      keyIntensity: 1.0,
+      keyColor: '#fbf7ea',
+      ambientIntensity: 0.6,
+      ambientColor: '#8f927c',
+      hemisphere: ['#b9bda4', '#3b3a2c', 0.85],
     },
   },
 ];
