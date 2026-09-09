@@ -8,6 +8,8 @@
  *  This file is only for HOW they behave, and for the building colours.
  * ========================================================================== */
 
+import type { OrbiterKind } from './worlds';
+
 /* ----------------------------------------------------------------- COLOURS ---
  * The neon colours the towers are lit with. One is picked per building.
  *
@@ -56,8 +58,23 @@ export const media = {
     /** Set to false to remove it entirely. */
     enabled: true,
 
-    /** 'spaceship' or 'asteroid'. */
-    kind: 'spaceship' as 'spaceship' | 'asteroid',
+    /**
+     * What shape it is.
+     *
+     *   'auto'         follow the world you are in (the default)
+     *   'spaceship'    sleek hull with engine glow
+     *   'dropship'     military transport plane
+     *   'hover-barge'  freight hauler with lit underside
+     *   'sky-lantern'  paper balloon with a basket
+     *   'monolith'     drifting slab of carved stone
+     *   'asteroid'     a lumpy rock
+     *
+     * On 'auto' each world gets the craft that suits it - a freighter over the
+     * neon city, a supply plane over the drop zone, a lantern over the
+     * district - because one spaceship over a desert temple looks daft. Naming
+     * a shape here pins that one shape everywhere instead.
+     */
+    kind: 'auto' as OrbiterKind | 'auto',
 
     /**
      * How far out it flies, in metres from the centre of the map.
@@ -81,8 +98,14 @@ export const media = {
     /** Width of the banner on its flank, in metres. */
     bannerWidth: 17,
 
-    /** Hull colour. The engine glow uses your current neon theme. */
-    color: '#8ea0b8',
+    /**
+     * Hull colour. Leave EMPTY to let each world pick its own - sandstone for
+     * the monolith, olive for the dropship, steel for the spaceship. Set a
+     * colour here to force that one everywhere.
+     *
+     * The engine glow and lights always follow your neon theme.
+     */
+    color: '',
   },
 } as const;
 

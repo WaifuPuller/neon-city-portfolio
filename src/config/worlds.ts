@@ -22,6 +22,15 @@ export type WorldId =
   | 'lantern-district'
   | 'battleground';
 
+/** The shapes the craft that circles the map can take. */
+export type OrbiterKind =
+  | 'spaceship'
+  | 'asteroid'
+  | 'hover-barge'
+  | 'sky-lantern'
+  | 'monolith'
+  | 'dropship';
+
 export interface WorldDefinition {
   id: WorldId;
   /** Shown on the chooser card. */
@@ -44,6 +53,15 @@ export interface WorldDefinition {
     farScale: number;
   };
 
+  /**
+   * What circles the map here, and in what colour.
+   *
+   * A spaceship over a desert temple is silly, so the craft follows the
+   * setting unless media.ts overrides it. Colour lives here too: a sandstone
+   * monolith and a steel hull cannot share one value.
+   */
+  orbiter: { kind: OrbiterKind; color: string };
+
   light: {
     /** Direction of the key light. Should agree with any sun in the sky. */
     keyPosition: Vec3;
@@ -59,6 +77,7 @@ export interface WorldDefinition {
 export const WORLDS: WorldDefinition[] = [
   {
     id: 'neon-city',
+    orbiter: { kind: 'hover-barge', color: '#3c4658' },
     name: 'NEON CITY',
     tagline: 'Rain-soaked streets, endless night',
     description:
@@ -78,6 +97,7 @@ export const WORLDS: WorldDefinition[] = [
   },
   {
     id: 'space-station',
+    orbiter: { kind: 'spaceship', color: '#8ea0b8' },
     name: 'ORBITAL STATION',
     tagline: 'A hangar deck, open space above',
     description:
@@ -98,6 +118,7 @@ export const WORLDS: WorldDefinition[] = [
   },
   {
     id: 'ancient-ruins',
+    orbiter: { kind: 'monolith', color: '#9c8464' },
     name: 'SUNKEN RUINS',
     tagline: 'Golden hour over old stone',
     description:
@@ -121,6 +142,7 @@ export const WORLDS: WorldDefinition[] = [
   },
   {
     id: 'lantern-district',
+    orbiter: { kind: 'sky-lantern', color: '#e8dccb' },
     name: 'LANTERN DISTRICT',
     tagline: 'Back streets, warm light, falling petals',
     description:
@@ -139,6 +161,7 @@ export const WORLDS: WorldDefinition[] = [
   },
   {
     id: 'battleground',
+    orbiter: { kind: 'dropship', color: '#6f7663' },
     name: 'THE DROP ZONE',
     tagline: 'Abandoned compound, closing circle',
     description:
