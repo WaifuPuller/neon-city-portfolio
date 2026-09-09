@@ -31,6 +31,25 @@ function makeRng(seed: number) {
   };
 }
 
+/**
+ * Rotation for a flat item stuck on a building face.
+ *
+ * A PlaneGeometry faces +Z, so its normal after rotating by rotY about Y is
+ * (sin rotY, cos rotY). It has to point AWAY from the building, and that means
+ * the rotation depends on WHICH SIDE the item is on - not just which axis.
+ *
+ * Writing `onX ? PI/2 : 0` and reusing it for both sides, which is the obvious
+ * thing to write, leaves half of everything facing into the wall it is bolted
+ * to. Emissive items survive that because their material is double-sided, but
+ * anything lit is back-face culled and simply disappears: it cost half the
+ * windows on the compound blocks, which is exactly the kind of thing that
+ * looks like "the art is a bit sparse" rather than like a bug.
+ */
+function faceRotation(onX: boolean, side: number): number {
+  if (onX) return (side > 0 ? 1 : -1) * (Math.PI / 2);
+  return side > 0 ? 0 : Math.PI;
+}
+
 export interface DecorItem {
   pos: Vec3;
   /** Rotation about Y, in radians. */
@@ -145,7 +164,7 @@ export const stationGreebles: DecorItem[] = (() => {
         pos: onX
           ? [b.position[0] + side * (w / 2 + 0.09), y, b.position[2] + along]
           : [b.position[0] + along, y, b.position[2] + side * (d / 2 + 0.09)],
-        rotY: onX ? Math.PI / 2 : 0,
+        rotY: faceRotation(onX, side),
         scale: [plateW, plateH, 0.18],
       });
     }
@@ -174,7 +193,7 @@ export const stationLights: DecorItem[] = (() => {
         pos: onX
           ? [b.position[0] + side * (w / 2 + 0.12), y, b.position[2] + along]
           : [b.position[0] + along, y, b.position[2] + side * (d / 2 + 0.12)],
-        rotY: onX ? Math.PI / 2 : 0,
+        rotY: faceRotation(onX, side),
         scale: [0.9, 0.14, 1],
         color: b.color,
       });
@@ -361,7 +380,7 @@ export const districtBanners: DecorItem[] = (() => {
             pos: onX
               ? [b.position[0] + side * (w / 2 + 0.12), top - length / 2, b.position[2] + along]
               : [b.position[0] + along, top - length / 2, b.position[2] + side * (d / 2 + 0.12)],
-            rotY: onX ? Math.PI / 2 : 0,
+            rotY: faceRotation(onX, side),
             scale: [0.62, length, 1],
             color: INK[Math.floor(rng() * INK.length)],
           });
@@ -399,7 +418,7 @@ export const districtWindows: DecorItem[] = (() => {
               pos: onX
                 ? [b.position[0] + side * (w / 2 + 0.05), y, b.position[2] + along]
                 : [b.position[0] + along, y, b.position[2] + side * (d / 2 + 0.05)],
-              rotY: onX ? Math.PI / 2 : 0,
+              rotY: faceRotation(onX, side),
               scale: [1.35, 1.0, 1],
               color: rng() > 0.7 ? '#ffb877' : '#ffd9a8',
             });
@@ -466,7 +485,7 @@ export const compoundWindows: DecorItem[] = (() => {
               pos: onX
                 ? [b.position[0] + side * (w / 2 + 0.05), y, b.position[2] + along]
                 : [b.position[0] + along, y, b.position[2] + side * (d / 2 + 0.05)],
-              rotY: onX ? Math.PI / 2 : 0,
+              rotY: faceRotation(onX, side),
               scale: [1.25, 1.45, 1],
             });
           }

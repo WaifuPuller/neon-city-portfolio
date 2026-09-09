@@ -425,11 +425,15 @@ const Boundary: React.FC = () => {
   const w = maxX - minX;
   const d = maxZ - minZ;
 
+  /* Nudged outward by half their thickness. Centred on the bound, half of
+     each wall reaches into the area the player is clamped to, so the camera
+     ends up inside the masonry when you walk to the edge. */
+  const T = 1.2;
   const walls: { pos: [number, number, number]; scale: [number, number, number] }[] = [
-    { pos: [cx, 3.2, minZ], scale: [w, 6.4, 1.2] },
-    { pos: [cx, 3.2, maxZ], scale: [w, 6.4, 1.2] },
-    { pos: [minX, 3.2, cz], scale: [1.2, 6.4, d] },
-    { pos: [maxX, 3.2, cz], scale: [1.2, 6.4, d] },
+    { pos: [cx, 3.2, minZ - T / 2], scale: [w + T, 6.4, T] },
+    { pos: [cx, 3.2, maxZ + T / 2], scale: [w + T, 6.4, T] },
+    { pos: [minX - T / 2, 3.2, cz], scale: [T, 6.4, d + T] },
+    { pos: [maxX + T / 2, 3.2, cz], scale: [T, 6.4, d + T] },
   ];
 
   return (

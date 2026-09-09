@@ -493,8 +493,11 @@ const Boundary: React.FC = () => {
       for (let t = from; t <= to; t += STEP) {
         const wobble = Math.sin(t * 0.7 + seed) * 0.5 + 0.5;
         const h = 2.2 + wobble * 3.4;
+        // Pushed clear of the play area, so the camera cannot end up inside
+        // the wall when the player walks into the edge of the map.
+        const OUT = 1.2 * Math.sign(fixed - (axis === 'x' ? cz : cx));
         out.push({
-          pos: axis === 'x' ? [t, h / 2, fixed] : [fixed, h / 2, t],
+          pos: axis === 'x' ? [t, h / 2, fixed + OUT] : [fixed + OUT, h / 2, t],
           scale: axis === 'x' ? [STEP + 0.4, h, 2.4] : [2.4, h, STEP + 0.4],
         });
       }
