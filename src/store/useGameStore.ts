@@ -15,6 +15,8 @@ import {
 import { COLLECTIBLES, QUEST_ZONES, ZONES } from '../systems/world';
 import { audio } from '../utils/audioSynth';
 import { detectQuality } from '../utils/device';
+import { WORLDS, type WorldId } from '../config/worlds';
+import { portfolio } from '../config/portfolio';
 
 /* ------------------------------------------------------------------ themes */
 
@@ -81,6 +83,10 @@ export interface GameState {
   activeModal: ModalType;
   introSkipped: boolean;
 
+  /** Which scenery is being rendered. Chosen by the visitor, or forced by
+      portfolio.ts when the chooser is switched off. */
+  worldId: WorldId;
+
   /* settings */
   quality: QualityLevel;
   /** False once the visitor picks a level by hand; stops auto-adjustment. */
@@ -114,6 +120,9 @@ export interface GameState {
   setPhase: (p: GamePhase) => void;
   setLoadProgress: (n: number) => void;
   beginGame: () => void;
+  chooseWorld: (id: WorldId) => void;
+  /** Preview a world on the chooser without committing to it. */
+  previewWorld: (id: WorldId) => void;
   skipIntro: () => void;
   openModal: (m: ModalId) => void;
   closeModal: () => void;
@@ -152,6 +161,8 @@ export const useGameStore = create<GameState>((set, get) => ({
   activeModal: null,
   introSkipped: false,
 
+  worldId: portfolio.world.setting,
+
   quality: detectQuality(),
   qualityAuto: true,
   theme: 'cyan',
@@ -185,7 +196,22 @@ export const useGameStore = create<GameState>((set, get) => ({
     audio.unlock();
     if (get().musicEnabled) audio.startMusic();
     audio.uiClick();
-    set({ phase: 'INTRO' });
+
+    // Straight past the chooser when there is nothing to choose between, or
+    // when the owner has pinned one world.
+    const offerChoice = portfolio.world.letVisitorChoose && WORLDS.length > 1;
+    set({ phase: offerChoice ? 'SELECT' : 'INTRO' });
+  },
+
+  previewWorld: (id) => {
+    if (get().worldId === id) return;
+    audio.uiHover();
+    set({ worldId: id });
+  },
+
+  chooseWorld: (id) => {
+    audio.uiClick();
+    set({ worldId: id, phase: 'INTRO' });
   },
 
   skipIntro: () => {
