@@ -5,16 +5,19 @@ import { EffectComposer, Bloom, Vignette } from '@react-three/postprocessing';
 import * as THREE from 'three';
 import { NeonCity } from './NeonCity';
 import { SpaceStation } from './SpaceStation';
+import { AncientRuins } from './AncientRuins';
 import { BuildingScreens } from './BuildingScreens';
 import { Orbiter } from './Orbiter';
 import { Landmarks } from './Landmarks';
 import { Player } from './Player';
 import { NavPath } from './NavPath';
 import { CinematicIntro } from './CinematicIntro';
+import { PreviewOrbit } from './PreviewOrbit';
 import { AdaptiveQuality } from './AdaptiveQuality';
 import { useGameStore, THEMES } from '../../store/useGameStore';
-import { QUALITY_PROFILES } from '../../utils/device';
-import { portfolio, worldSetting } from '../../config/portfolio';
+import { QUALITY_PROFILES, type QualityProfile } from '../../utils/device';
+import { portfolio } from '../../config/portfolio';
+import { getWorld, type WorldDefinition, type WorldId } from '../../config/worlds';
 import { projectAccent } from '../../utils/accent';
 
 /* ---------------------------------------------------------------------------
@@ -101,32 +104,33 @@ const LabHolograms: React.FC = () => {
 
 /* ------------------------------------------------------------------ lighting */
 
-const Lighting: React.FC<{ shadows: boolean; primary: string; accent: string }> = ({
-  shadows,
-  primary,
-  accent,
-}) => {
+const Lighting: React.FC<{
+  shadows: boolean;
+  primary: string;
+  accent: string;
+  world: WorldDefinition;
+}> = ({ shadows, primary, accent, world }) => {
   const key = useRef<THREE.DirectionalLight>(null);
 
-  /* In orbit the key light is the sun drawn in the sky shader, so it has to
-     come from the same direction or the shadows point the wrong way. Vacuum
-     also means almost no bounce, hence the much weaker fill - the coloured rim
-     lights below do the work the city's smog used to do. */
-  const station = worldSetting === 'space-station';
-  const keyPos: [number, number, number] = station ? [82, 30, -99] : [38, 60, -20];
+  /* Every number here comes from the world registry rather than a chain of
+     "is it the station?" checks. Each setting needs its key light aimed at
+     whatever sun its own sky shader draws, or the shadows fall the wrong way,
+     and needs its own fill: vacuum bounces almost nothing, a desert at golden
+     hour bounces a great deal. */
+  const { light } = world;
 
   return (
     <>
-      <ambientLight intensity={station ? 0.26 : 0.45} color={station ? '#1b2438' : '#243352'} />
-      <hemisphereLight args={[station ? '#16224a' : '#1b2a5a', '#05060e', station ? 0.45 : 0.7]} />
+      <ambientLight intensity={light.ambientIntensity} color={light.ambientColor} />
+      <hemisphereLight args={[light.hemisphere[0], light.hemisphere[1], light.hemisphere[2]]} />
       {/* The key light stays close to neutral. Tinting it with the theme
           colour looked good on the grey buildings but wrecked the character's
           skin and clothing — a cyan key over an orange model reads as green. */}
       <directionalLight
         ref={key}
-        position={keyPos}
-        intensity={station ? 2.1 : 1.5}
-        color={station ? '#fff2df' : '#e8f0ff'}
+        position={light.keyPosition}
+        intensity={light.keyIntensity}
+        color={light.keyColor}
         castShadow={shadows}
         shadow-mapSize={[1024, 1024]}
         shadow-camera-near={1}
@@ -147,42 +151,57 @@ const Lighting: React.FC<{ shadows: boolean; primary: string; accent: string }> 
   );
 };
 
+/* ---------------------------------------------------------------------------
+ * The only place that knows which component draws which world.
+ *
+ * All three take exactly the same props and read the same data out of
+ * world.ts, so they are interchangeable - which is what lets the visitor swap
+ * between them mid-session without anything else in the game noticing.
+ * ------------------------------------------------------------------------- */
+
+interface EnvironmentProps {
+  profile: QualityProfile;
+  primary: string;
+  accent: string;
+  glow: string;
+}
+
+const ENVIRONMENTS: Record<WorldId, React.FC<EnvironmentProps>> = {
+  'neon-city': NeonCity,
+  'space-station': SpaceStation,
+  'ancient-ruins': AncientRuins,
+};
+
 /* ========================================================================= */
 
 export const Scene: React.FC<{ onCaption: (c: string | null) => void }> = ({ onCaption }) => {
   const quality = useGameStore((s) => s.quality);
   const theme = useGameStore((s) => s.theme);
+  const worldId = useGameStore((s) => s.worldId);
+
   const profile = QUALITY_PROFILES[quality];
   const palette = THEMES[theme];
+  const world = getWorld(worldId);
+  const Environment = ENVIRONMENTS[world.id];
 
   return (
     <>
-      {/* Vacuum is clear, so the station keeps only enough haze to hide the far
-          edge of the deck; the city keeps its heavy rain-soaked murk. */}
-      {worldSetting === 'space-station' ? (
-        <fog attach="fog" args={['#070910', 46, profile.fogFar * 1.35]} />
-      ) : (
-        <fog attach="fog" args={['#06070f', 26, profile.fogFar]} />
-      )}
-      <color attach="background" args={['#05060e']} />
+      <fog attach="fog" args={[world.fog.color, world.fog.near, profile.fogFar * world.fog.farScale]} />
+      <color attach="background" args={[world.fog.color]} />
 
-      <Lighting shadows={profile.shadows} primary={palette.primary} accent={palette.accent} />
+      <Lighting
+        shadows={profile.shadows}
+        primary={palette.primary}
+        accent={palette.accent}
+        world={world}
+      />
 
-      {worldSetting === 'space-station' ? (
-        <SpaceStation
-          profile={profile}
-          primary={palette.primary}
-          accent={palette.accent}
-          glow={palette.secondary}
-        />
-      ) : (
-        <NeonCity
-          profile={profile}
-          primary={palette.primary}
-          accent={palette.accent}
-          glow={palette.secondary}
-        />
-      )}
+      <Environment
+        profile={profile}
+        primary={palette.primary}
+        accent={palette.accent}
+        glow={palette.secondary}
+      />
       <LabHolograms />
       {/* The owner's own pictures: panels on the towers, and a banner on the
           craft circling outside the map. Both render nothing at all until
@@ -193,6 +212,7 @@ export const Scene: React.FC<{ onCaption: (c: string | null) => void }> = ({ onC
       <NavPath />
       <Player />
       <CinematicIntro onCaption={onCaption} />
+      <PreviewOrbit />
       <AdaptiveQuality />
 
       {/* 4x MSAA on the composer target is a large cost for very little gain

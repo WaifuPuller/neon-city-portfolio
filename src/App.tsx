@@ -6,6 +6,7 @@ import { ErrorBoundary } from './components/core/ErrorBoundary';
 import { NoWebGLFallback } from './components/core/NoWebGLFallback';
 
 import { StartScreen } from './components/ui/StartScreen';
+import { WorldSelect } from './components/ui/WorldSelect';
 import { HUD } from './components/ui/HUD';
 import { IntroOverlay } from './components/ui/IntroOverlay';
 import { Toasts } from './components/ui/Toasts';
@@ -242,6 +243,7 @@ export const App: React.FC = () => {
           {phase === 'START' && (
             <StartScreen key="start" touch={touch} ready={engineReady} progress={loadProgress} />
           )}
+          {phase === 'SELECT' && <WorldSelect key="select" />}
         </AnimatePresence>
 
         <PauseMenu />

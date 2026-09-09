@@ -1,4 +1,8 @@
-export type GamePhase = 'BOOT' | 'START' | 'INTRO' | 'PLAYING' | 'PAUSED';
+/**
+ * SELECT sits between the start screen and the cinematic: the visitor picks
+ * which world to explore while the scene renders live behind the chooser.
+ */
+export type GamePhase = 'BOOT' | 'START' | 'SELECT' | 'INTRO' | 'PLAYING' | 'PAUSED';
 
 export type ModalId =
   | 'about'

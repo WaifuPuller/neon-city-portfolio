@@ -283,26 +283,33 @@ Cores in the city. A personal note, a thank-you, anything you like.
     it a drifting rock instead, set  kind: 'asteroid' .
 
 
---- THE SETTING (space station or neon city) ----------------------------------
+--- THE SETTING (which world your portfolio is in) -----------------------------
 
-    Find  world:  in portfolio.ts and change the one word:
+    Three worlds ship with the game. They all use the SAME layout: the same
+    streets, the same landmarks, your same content, the same map and the same
+    navigation arrows. Only the scenery changes.
+
+        'neon-city'       a rain-soaked cyberpunk street at night
+        'space-station'   an orbital hangar deck, stars overhead
+        'ancient-ruins'   a desert temple complex at golden hour
+
+    By default VISITORS CHOOSE for themselves. After they press ENTER on the
+    start screen they get a "Choose your world" screen, with the world they are
+    hovering rendered live behind the cards. Then the opening shot plays.
+
+    In portfolio.ts:
 
         world: {
-          setting: 'space-station',      <- an orbital hangar deck, stars above
+          letVisitorChoose: true,          <- show the chooser
+          setting: 'space-station',        <- the one that starts selected
         },
 
-    The two choices are:
+    Set letVisitorChoose to false and nobody is asked - everyone goes straight
+    into whichever world `setting` names.
 
-        'space-station'   plated deck, station modules, drifting dust, open
-                          space and a distant sun overhead
-        'neon-city'       rain-soaked street at night, neon towers, wet grid
-
-    This changes the SCENERY ONLY. Your content, the landmarks, the layout,
-    the map, the navigation arrows, the character and every objective are
-    identical either way - so switch back and forth as often as you like and
-    nothing is lost.
-
-    The neon theme colours (ESC -> SETTINGS) still apply to both.
+    The names, taglines, descriptions and card colours shown on the chooser all
+    live in  src/config/worlds.ts , along with each world's lighting and fog.
+    That is also where you would add a fourth.
 
 
 --- THE OPENING CINEMATIC -----------------------------------------------------
@@ -497,6 +504,7 @@ HOW DO I PUT IT ONLINE?
   THE CONTROLS (for your own reference)
 ===============================================================================
 
+    Arrows + ENTER ...... pick a world on the chooser screen
     Click the view ...... captures the mouse so it steers the camera
     (just walking) ...... pressing W A S D also captures it, so the mouse
                           steers from the first step without clicking first

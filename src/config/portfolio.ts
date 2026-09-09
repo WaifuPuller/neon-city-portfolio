@@ -21,8 +21,7 @@
  * just gets a generic link icon, so you can never break the site by adding
  * something unexpected.
  */
-/** The scenery packs that ship with the game. See `world` below. */
-export type WorldSetting = 'neon-city' | 'space-station';
+import type { WorldId } from './worlds';
 
 export type SocialPlatform =
   | 'github'
@@ -341,16 +340,26 @@ export const portfolio = {
   /* ----------------------------------------------------------------- WORLD ---
    * Where the whole thing is set.
    *
-   *   'space-station'  an orbital hangar deck, open space and stars overhead
-   *   'neon-city'      a rain-soaked cyberpunk street at night
+   *   'space-station'   an orbital hangar deck, open space and stars overhead
+   *   'neon-city'       a rain-soaked cyberpunk street at night
+   *   'ancient-ruins'   a desert temple complex at golden hour
    *
    * This changes the SCENERY ONLY. The layout, your content, the landmarks,
-   * the map and the navigation arrows are all identical either way, so you can
-   * switch back and forth freely to see which you prefer. Change the one word
-   * below and save.
+   * the map and the navigation arrows are identical wherever you are.
+   *
+   * The full list, with the descriptions shown on the chooser, lives in
+   * src/config/worlds.ts.
    * -------------------------------------------------------------------------- */
   world: {
-    setting: 'space-station' as WorldSetting,
+    /**
+     * Let visitors pick for themselves, on a screen between the start button
+     * and the opening shot. Set to false to force everyone into `setting`.
+     */
+    letVisitorChoose: true,
+
+    /** The one that starts selected, and the only one used when the chooser
+     *  is switched off. */
+    setting: 'space-station' as WorldId,
   },
 
   character: {
@@ -403,9 +412,6 @@ export type Portfolio = typeof portfolio;
 /* --------------------------------------------------------------- DERIVED ---
  * Convenience flags used to decide which landmarks exist in the city.
  * ------------------------------------------------------------------------- */
-
-/** The two scenery packs that ship with the game. */
-export const worldSetting: WorldSetting = portfolio.world.setting;
 
 export const has = {
   about: portfolio.about.paragraphs.length > 0,
