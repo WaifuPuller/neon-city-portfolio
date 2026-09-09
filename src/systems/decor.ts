@@ -330,3 +330,234 @@ if (import.meta.env.DEV) {
       `(${total} instances total, drawn in 5 instanced meshes).`,
   );
 }
+
+/* ===========================================================================
+ * LANTERN DISTRICT
+ * Shop banners hanging down the walls, and the lanterns strung between them.
+ * ========================================================================= */
+
+/** Vertical shop banners, the signature of a Japanese back street. */
+export const districtBanners: DecorItem[] = (() => {
+  const rng = makeRng(0x5eed05);
+  const out: DecorItem[] = [];
+  const INK = ['#e2564a', '#f0a04b', '#f5e6c8', '#4ea1c9', '#e8d84a'];
+
+  for (const b of buildings) {
+    const [w, h, d] = b.size;
+    const base = b.position[1] - h / 2;
+    const perFace = 1 + Math.floor(rng() * 3);
+
+    for (const onX of [true, false]) {
+      for (const side of [1, -1]) {
+        for (let i = 0; i < perFace; i++) {
+          if (rng() > 0.62) continue;
+
+          const along = (rng() - 0.5) * (onX ? d : w) * 0.72;
+          const length = 2.4 + rng() * 3.6;
+          // Hung from just under the first floor, where a real one would be.
+          const top = base + 4.4 + rng() * 3.5;
+
+          out.push({
+            pos: onX
+              ? [b.position[0] + side * (w / 2 + 0.12), top - length / 2, b.position[2] + along]
+              : [b.position[0] + along, top - length / 2, b.position[2] + side * (d / 2 + 0.12)],
+            rotY: onX ? Math.PI / 2 : 0,
+            scale: [0.62, length, 1],
+            color: INK[Math.floor(rng() * INK.length)],
+          });
+        }
+      }
+    }
+  }
+
+  return out;
+})();
+
+/** Warm windows. Fewer and larger than the city's - these are homes above shops. */
+export const districtWindows: DecorItem[] = (() => {
+  const rng = makeRng(0x5eed06);
+  const out: DecorItem[] = [];
+
+  for (const b of buildings) {
+    const [w, h, d] = b.size;
+    const base = b.position[1] - h / 2;
+    const rows = Math.max(1, Math.floor((h - 5) / 3.2));
+
+    for (const onX of [true, false]) {
+      for (const side of [1, -1]) {
+        const across = onX ? d : w;
+        const columns = Math.max(1, Math.floor((across - 1.6) / 2.4));
+        const start = -((columns - 1) * 2.4) / 2;
+
+        for (let c = 0; c < columns; c++) {
+          for (let r = 0; r < rows; r++) {
+            if (rng() > 0.42) continue;
+            const along = start + c * 2.4;
+            const y = base + 4.6 + r * 3.2;
+
+            out.push({
+              pos: onX
+                ? [b.position[0] + side * (w / 2 + 0.05), y, b.position[2] + along]
+                : [b.position[0] + along, y, b.position[2] + side * (d / 2 + 0.05)],
+              rotY: onX ? Math.PI / 2 : 0,
+              scale: [1.35, 1.0, 1],
+              color: rng() > 0.7 ? '#ffb877' : '#ffd9a8',
+            });
+          }
+        }
+      }
+    }
+  }
+
+  return out;
+})();
+
+export function districtGlow(): GlowItem[] {
+  const out: GlowItem[] = [];
+
+  // The lanterns themselves.
+  for (const p of PROPS) {
+    if (p.kind !== 'lamp') continue;
+    out.push({ pos: [p.x, 4.3, p.z], color: '#ff8a5c', size: LAMP_HALO * 1.3 });
+  }
+
+  // Vending machines throw a surprising amount of light onto a dark street.
+  for (const p of PROPS) {
+    if (p.kind !== 'sign') continue;
+    out.push({ pos: [p.x, 1.6, p.z], color: '#9fd8ff', size: LAMP_HALO });
+  }
+
+  return out;
+}
+
+/* ===========================================================================
+ * THE DROP ZONE
+ *
+ * An original military-settlement dressing in the battle-royale genre:
+ * concrete compounds, corrugated roofing, supply crates, watchtowers. No
+ * assets, layouts or marks from any existing game - just the vocabulary the
+ * genre shares.
+ * ========================================================================= */
+
+/** Dark window openings. In daylight a window reads as a hole, not a light. */
+export const compoundWindows: DecorItem[] = (() => {
+  const rng = makeRng(0x5eed07);
+  const out: DecorItem[] = [];
+
+  for (const b of buildings) {
+    const [w, h, d] = b.size;
+    const base = b.position[1] - h / 2;
+    const floors = Math.max(1, Math.floor((h - 2.5) / 3.4));
+
+    for (const onX of [true, false]) {
+      for (const side of [1, -1]) {
+        const across = onX ? d : w;
+        const columns = Math.max(1, Math.floor((across - 1.4) / 2.2));
+        const start = -((columns - 1) * 2.2) / 2;
+
+        for (let c = 0; c < columns; c++) {
+          for (let f = 0; f < floors; f++) {
+            // A few are boarded up, which is what stops a grid reading as a grid.
+            if (rng() > 0.78) continue;
+            const along = start + c * 2.2;
+            const y = base + 2.4 + f * 3.4;
+
+            out.push({
+              pos: onX
+                ? [b.position[0] + side * (w / 2 + 0.05), y, b.position[2] + along]
+                : [b.position[0] + along, y, b.position[2] + side * (d / 2 + 0.05)],
+              rotY: onX ? Math.PI / 2 : 0,
+              scale: [1.25, 1.45, 1],
+            });
+          }
+        }
+      }
+    }
+  }
+
+  return out;
+})();
+
+/** Floor bands: the concrete lip between storeys on a poured-slab building. */
+export const compoundBands: DecorItem[] = (() => {
+  const out: DecorItem[] = [];
+
+  for (const b of buildings) {
+    const [w, h, d] = b.size;
+    const base = b.position[1] - h / 2;
+    const floors = Math.max(1, Math.floor(h / 3.4));
+
+    for (let f = 1; f <= floors; f++) {
+      const y = base + f * 3.4;
+      if (y > base + h - 1) break;
+      out.push({
+        pos: [b.position[0], y, b.position[2]],
+        rotY: 0,
+        scale: [w + 0.26, 0.34, d + 0.26],
+      });
+    }
+  }
+
+  return out;
+})();
+
+/** Corrugated roof caps and rooftop water tanks. */
+export const compoundRoofs: DecorItem[] = (() => {
+  const rng = makeRng(0x5eed08);
+  const out: DecorItem[] = [];
+
+  for (const b of buildings) {
+    const [w, h, d] = b.size;
+    const top = b.position[1] + h / 2;
+
+    // Parapet
+    out.push({
+      pos: [b.position[0], top + 0.45, b.position[2]],
+      rotY: 0,
+      scale: [w + 0.5, 0.9, d + 0.5],
+    });
+
+    // A tank or an aircon unit on about half of them.
+    if (rng() > 0.5) {
+      out.push({
+        pos: [
+          b.position[0] + (rng() - 0.5) * w * 0.5,
+          top + 1.6,
+          b.position[2] + (rng() - 0.5) * d * 0.5,
+        ],
+        rotY: rng() * Math.PI,
+        scale: [1.6 + rng(), 1.8, 1.4 + rng()],
+      });
+    }
+  }
+
+  return out;
+})();
+
+/** Sandbag stacks and concrete blocks scattered as cover. */
+export const compoundCover: DecorItem[] = (() => {
+  const rng = makeRng(0x5eed09);
+  const out: DecorItem[] = [];
+
+  for (const b of buildings) {
+    const [w, h, d] = b.size;
+    const base = b.position[1] - h / 2;
+    const count = 2 + Math.floor(rng() * 4);
+
+    for (let i = 0; i < count; i++) {
+      const angle = rng() * Math.PI * 2;
+      const reach = 0.7 + rng() * 0.9;
+      out.push({
+        pos: [
+          b.position[0] + Math.sin(angle) * (w / 2) * (1 + reach),
+          base + 0.42,
+          b.position[2] + Math.cos(angle) * (d / 2) * (1 + reach),
+        ],
+        rotY: rng() * Math.PI,
+        scale: [1.9 + rng(), 0.85, 0.95],
+      });
+    }
+  }
+
+  return out;
+})();

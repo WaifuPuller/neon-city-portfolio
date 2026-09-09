@@ -118,7 +118,9 @@ export const WorldSelect: React.FC = () => {
           </AnimatePresence>
         </div>
 
-        <div className="mx-auto flex max-w-4xl snap-x gap-3 overflow-x-auto pb-2 sm:justify-center sm:gap-4 sm:overflow-visible">
+        {/* Scrolls sideways on a phone; wraps on anything wider, so the row
+            keeps working however many worlds end up in the registry. */}
+        <div className="mx-auto flex max-w-5xl snap-x gap-3 overflow-x-auto pb-2 sm:flex-wrap sm:justify-center sm:gap-3 sm:overflow-visible">
           {WORLDS.map((world) => {
             const active = world.id === worldId;
             return (
@@ -129,7 +131,7 @@ export const WorldSelect: React.FC = () => {
                 onFocus={() => previewWorld(world.id)}
                 aria-pressed={active}
                 aria-label={`${world.name} — ${world.tagline}`}
-                className={`group relative w-[62vw] shrink-0 snap-center overflow-hidden rounded-xl border text-left transition-all duration-300 sm:w-56 ${
+                className={`group relative w-[62vw] shrink-0 snap-center overflow-hidden rounded-xl border text-left transition-all duration-300 sm:w-44 ${
                   active
                     ? 'scale-[1.03] border-white/40 shadow-2xl'
                     : 'border-white/10 opacity-60 hover:opacity-100'
@@ -138,7 +140,7 @@ export const WorldSelect: React.FC = () => {
                 {/* A stripe of the world's own colours, so each card reads as
                     that place before the 3D behind it has even been seen. */}
                 <div
-                  className="h-20 w-full sm:h-24"
+                  className="h-20 w-full sm:h-20"
                   style={{
                     background: `linear-gradient(150deg, ${world.swatch[0]} 0%, ${world.swatch[1]} 62%, ${world.swatch[2]} 100%)`,
                   }}

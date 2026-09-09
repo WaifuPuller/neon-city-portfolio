@@ -285,13 +285,15 @@ Cores in the city. A personal note, a thank-you, anything you like.
 
 --- THE SETTING (which world your portfolio is in) -----------------------------
 
-    Three worlds ship with the game. They all use the SAME layout: the same
+    Five worlds ship with the game. They all use the SAME layout: the same
     streets, the same landmarks, your same content, the same map and the same
     navigation arrows. Only the scenery changes.
 
-        'neon-city'       a rain-soaked cyberpunk street at night
-        'space-station'   an orbital hangar deck, stars overhead
-        'ancient-ruins'   a desert temple complex at golden hour
+        'neon-city'         a rain-soaked cyberpunk street at night
+        'space-station'     an orbital hangar deck, stars overhead
+        'ancient-ruins'     a desert temple complex at golden hour
+        'lantern-district'  a Japanese back street, lanterns and blossom
+        'battleground'      an abandoned military compound, overcast daylight
 
     By default VISITORS CHOOSE for themselves. After they press ENTER on the
     start screen they get a "Choose your world" screen, with the world they are
