@@ -26,8 +26,15 @@ const TARGET_FPS = 40;
 const WINDOW = 3;
 /** Ignore the first moments, while shaders compile and the scene warms up. */
 const GRACE = 4;
-/** Never step down more than this, so it cannot spiral to nothing. */
-const MAX_STEPS = 2;
+/**
+ * Never step down more than this, so it cannot spiral to nothing.
+ *
+ * Three, not two: detectQuality can start a machine at 'high', and
+ * high -> medium -> low is already two steps. At two, such a machine could
+ * reach 'low' and then never reach the lean floor below it, which is the one
+ * rung that exists precisely for hardware that cannot manage 'low'.
+ */
+const MAX_STEPS = 3;
 
 export const AdaptiveQuality: React.FC = () => {
   const elapsed = useRef(0);
