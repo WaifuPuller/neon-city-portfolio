@@ -279,8 +279,24 @@ Cores in the city. A personal note, a thank-you, anything you like.
     the towers or stay put, and the ship's size, speed, height and shape -
     open  src/config/media.ts . Every setting in there is commented.
 
-    To turn the ship off entirely, set  enabled: false  in that file. To make
-    it a drifting rock instead, set  kind: 'asteroid' .
+    THE CRAFT CHANGES WITH THE WORLD. By default each setting gets one that
+    belongs there:
+
+        NEON CITY         a neon freight hauler, lit underneath
+        ORBITAL STATION   a spaceship with engine glow
+        SUNKEN RUINS      a drifting slab of carved stone
+        LANTERN DISTRICT  a paper sky lantern with a basket
+        THE DROP ZONE     a military supply plane
+
+    Your orbiter.jpg is carried by whichever one it is, sized to suit it - a
+    banner that fits a 24m aeroplane would swamp a 9m slab of stone.
+
+    To pin ONE shape everywhere, set  kind:  in src/config/media.ts to
+    'spaceship', 'dropship', 'hover-barge', 'sky-lantern', 'monolith' or
+    'asteroid' instead of 'auto'. Setting  color:  there does the same for the
+    hull colour. Leave both as they are to let each world choose.
+
+    To turn it off entirely, set  enabled: false .
 
 
 --- THE SETTING (which world your portfolio is in) -----------------------------
