@@ -4,6 +4,8 @@ import { Instance, Instances } from '@react-three/drei';
 import * as THREE from 'three';
 import { buildings, PROPS, WORLD_BOUNDS } from '../../systems/world';
 import { QualityProfile } from '../../utils/device';
+import { stationGlow, stationGreebles, stationLights } from '../../systems/decor';
+import { Decor, Glow } from './Decor';
 
 /* ===========================================================================
  * ORBITAL STATION
@@ -623,13 +625,27 @@ interface Props {
   glow: string;
 }
 
-export const SpaceStation: React.FC<Props> = ({ profile, primary, accent, glow }) => (
-  <group>
-    <Space glow={glow} accent={accent} />
-    <Deck primary={primary} accent={accent} />
-    <Modules detail={profile.detail} shadows={profile.shadows} />
-    {profile.detail && <DeckProps accent={accent} />}
-    {profile.particles > 0 && <Motes count={Math.round(profile.particles * 0.5)} color={primary} />}
-    <ContainmentField color={primary} />
-  </group>
-);
+export const SpaceStation: React.FC<Props> = ({ profile, primary, accent, glow }) => {
+  const halos = useMemo(() => stationGlow(accent), [accent]);
+
+  return (
+    <group>
+      <Space glow={glow} accent={accent} />
+      <Deck primary={primary} accent={accent} />
+      <Modules detail={profile.detail} shadows={profile.shadows} />
+
+      {/* Access panels and conduit runs bolted to the hulls, then the running
+          lights over the top. Two draw calls for the whole station. */}
+      {profile.detail && (
+        <Decor items={stationGreebles} shape="box" color="#39445a" roughness={0.4} metalness={0.85} />
+      )}
+      {profile.detail && <Decor items={stationLights} emissive />}
+
+      {profile.detail && <DeckProps accent={accent} />}
+      {profile.particles > 0 && <Motes count={Math.round(profile.particles * 0.5)} color={primary} />}
+      <ContainmentField color={primary} />
+
+      {profile.detail && !profile.bloom && <Glow items={halos} />}
+    </group>
+  );
+};

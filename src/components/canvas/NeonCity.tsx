@@ -4,6 +4,8 @@ import { Instance, Instances } from '@react-three/drei';
 import * as THREE from 'three';
 import { buildings, PROPS, WORLD_BOUNDS } from '../../systems/world';
 import { QualityProfile } from '../../utils/device';
+import { cityGlow, cityWindows } from '../../systems/decor';
+import { Decor, Glow } from './Decor';
 
 /* ===========================================================================
  * GROUND
@@ -47,16 +49,35 @@ const groundFragment = /* glsl */ `
     // A pulse of light travelling north along the road.
     float pulse = smoothstep(0.86, 1.0, sin(vWorld.y * 0.09 - uTime * 0.9) * 0.5 + 0.5);
 
+    /* Standing water.
+     *
+     * Crossed sine waves rather than value noise: this runs on every ground
+     * pixel on the screen, and two octaves of hashed noise is a dozen-odd
+     * sin() calls per fragment where this is four. On the hardware that has to
+     * run the low preset that difference is real, and nobody can tell the two
+     * apart once it is a puddle in the dark.
+     */
+    float water = sin(vWorld.x * 0.13 + 1.7) * sin(vWorld.y * 0.11 - 0.6)
+                + 0.5 * sin(vWorld.x * 0.31 - 2.1) * sin(vWorld.y * 0.27 + 1.2);
+    float puddle = smoothstep(0.30, 0.78, water);
+
     float dist = length(vWorld);
     float falloff = 1.0 - smoothstep(40.0, 155.0, dist);
 
     vec3 color = uBaseColor;
     color += uGridColor * fine * 0.26 * falloff;
     color += uGridColor * coarse * 0.48 * falloff;
+
+    // Wet tarmac is DARKER than dry, and throws back far more of the neon.
+    // Both halves matter: brightening alone reads as a paint spill.
+    color *= 1.0 - puddle * 0.45;
+    color += uGridColor * puddle * 0.07 * falloff;
     // Keep the road base dim so the character stays readable against it; the
     // travelling pulse carries most of the colour.
     color += uRoadColor * boulevard * 0.035 * falloff;
     color += uRoadColor * boulevard * pulse * 0.50 * falloff;
+    // The travelling pulse reflected in the standing water.
+    color += uRoadColor * puddle * pulse * 0.42 * falloff;
 
     gl_FragColor = vec4(color, 1.0);
     #include <colorspace_fragment>
@@ -437,13 +458,26 @@ interface Props {
   glow: string;
 }
 
-export const NeonCity: React.FC<Props> = ({ profile, primary, accent, glow }) => (
-  <group>
-    <Sky glow={glow} />
-    <Ground primary={primary} accent={accent} />
-    <Buildings detail={profile.detail} shadows={profile.shadows} />
-    {profile.detail && <StreetProps accent={accent} />}
-    {profile.particles > 0 && <Rain count={profile.particles} color={primary} />}
-    <Boundary color={primary} />
-  </group>
-);
+export const NeonCity: React.FC<Props> = ({ profile, primary, accent, glow }) => {
+  // Recomputed only when the theme's accent changes, which is almost never.
+  const halos = useMemo(() => cityGlow(accent), [accent]);
+
+  return (
+    <group>
+      <Sky glow={glow} />
+      <Ground primary={primary} accent={accent} />
+      <Buildings detail={profile.detail} shadows={profile.shadows} />
+
+      {/* Thousands of lit windows in one draw call. More than anything else,
+          this is what stops the towers reading as grey boxes. */}
+      {profile.detail && <Decor items={cityWindows} emissive />}
+
+      {profile.detail && <StreetProps accent={accent} />}
+      {profile.particles > 0 && <Rain count={profile.particles} color={primary} />}
+      <Boundary color={primary} />
+
+      {/* Stands in for bloom when the post-processing pass is switched off. */}
+      {profile.detail && !profile.bloom && <Glow items={halos} />}
+    </group>
+  );
+};
