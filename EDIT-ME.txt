@@ -463,13 +463,23 @@ HOW DO I CHANGE THE COLOURS?
     and use 'magenta', 'emerald' or 'amber'.
 
 THE GAME RUNS SLOWLY ON MY MACHINE
-    It now measures its own framerate and lowers the graphics automatically
-    if it drops below about 40fps, telling you when it does.
+    It measures its own framerate and lowers the graphics automatically if it
+    drops below about 40fps, telling you when it does.
 
     To set it yourself: ESC -> SETTINGS -> GRAPHICS. Choosing a level by hand
-    switches the automatic adjustment off, so your choice sticks.
+    switches the automatic adjustment off, so your choice sticks - and it also
+    restores full detail if the game had reduced it.
 
-    LOW turns off bloom and particles entirely and is the fastest.
+    LOW still shows the lit windows, street furniture and surface detail. What
+    it drops is the expensive stuff: the glow pass, antialiasing, most of the
+    rain, and it renders at a lower pixel ratio. That decoration is drawn a
+    few thousand objects at a time in a single instruction to the graphics
+    card, so it costs almost nothing - which is why it is worth keeping even
+    on slow machines.
+
+    If even LOW cannot hold a sensible framerate, the game drops one step
+    further on its own and turns the scenery detail off, saying so when it
+    does. That is the floor.
 
 HOW DO I CHANGE THE BROWSER TAB TITLE?
     Open  index.html  and edit the <title> line near the top.

@@ -61,7 +61,24 @@ export const AdaptiveQuality: React.FC = () => {
     if (fps >= TARGET_FPS) return;
 
     const index = ORDER.indexOf(store.quality);
-    if (index === -1 || index >= ORDER.length - 1) return; // already at 'low'
+
+    /* Already at the lowest preset and still short of target: strip the
+       decoration rather than shrugging. This is the floor - there is nothing
+       below it - so it is only reached by hardware that genuinely cannot
+       manage, and it is lifted the moment anyone picks a level by hand. */
+    if (index >= ORDER.length - 1) {
+      if (store.leanMode) return;
+      steps.current += 1;
+      store.setLeanMode(true);
+      store.pushToast({
+        kind: 'info',
+        title: 'REDUCED DETAIL',
+        body: `Running at ${Math.round(fps)} fps — scenery detail turned off. Change it in Settings.`,
+        icon: 'zap',
+      });
+      return;
+    }
+    if (index === -1) return;
 
     const next = ORDER[index + 1];
     steps.current += 1;

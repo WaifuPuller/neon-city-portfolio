@@ -91,6 +91,14 @@ export interface GameState {
   quality: QualityLevel;
   /** False once the visitor picks a level by hand; stops auto-adjustment. */
   qualityAuto: boolean;
+  /**
+   * The floor beneath the lowest preset: decoration and particles off.
+   *
+   * Set only when the framerate monitor is already at 'low' and still cannot
+   * hold a sensible rate. Without it there is nowhere left to go, and a
+   * machine that struggles at 'low' just stays slow forever.
+   */
+  leanMode: boolean;
   theme: ThemeId;
   sfxEnabled: boolean;
   musicEnabled: boolean;
@@ -131,6 +139,7 @@ export interface GameState {
   setQuality: (q: QualityLevel) => void;
   /** Used by the framerate monitor; does not disable auto-adjustment. */
   autoSetQuality: (q: QualityLevel) => void;
+  setLeanMode: (v: boolean) => void;
   setTheme: (t: ThemeId) => void;
   toggleSfx: () => void;
   toggleMusic: () => void;
@@ -165,6 +174,7 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   quality: detectQuality(),
   qualityAuto: true,
+  leanMode: false,
   theme: 'cyan',
   sfxEnabled: true,
   musicEnabled: true,
@@ -259,11 +269,14 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   setQuality: (q) => {
     audio.uiClick();
-    // A deliberate choice always wins over the monitor.
-    set({ quality: q, qualityAuto: false });
+    // A deliberate choice always wins over the monitor, and lifts the lean
+    // floor too - otherwise picking 'ultra' by hand would silently keep the
+    // scenery stripped out.
+    set({ quality: q, qualityAuto: false, leanMode: false });
   },
 
   autoSetQuality: (q) => set({ quality: q }),
+  setLeanMode: (v) => set({ leanMode: v }),
   setTheme: (t) => {
     audio.uiClick();
     set({ theme: t });

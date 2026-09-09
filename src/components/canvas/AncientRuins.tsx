@@ -4,6 +4,8 @@ import { Instance, Instances } from '@react-three/drei';
 import * as THREE from 'three';
 import { buildings, PROPS, WORLD_BOUNDS } from '../../systems/world';
 import { QualityProfile } from '../../utils/device';
+import { ruinCourses, ruinGlow, ruinRubble } from '../../systems/decor';
+import { Decor, Glow } from './Decor';
 
 /* ===========================================================================
  * SUNKEN RUINS
@@ -525,13 +527,36 @@ interface Props {
   glow: string;
 }
 
-export const AncientRuins: React.FC<Props> = ({ profile, accent, glow }) => (
-  <group>
-    <Sky glow={glow} />
-    <Ground />
-    <Ruins detail={profile.detail} shadows={profile.shadows} />
-    {profile.detail && <RuinProps accent={accent} />}
-    {profile.particles > 0 && <Dust count={Math.round(profile.particles * 0.6)} />}
-    <Boundary />
-  </group>
-);
+export const AncientRuins: React.FC<Props> = ({ profile, accent, glow }) => {
+  const halos = useMemo(() => ruinGlow(), []);
+
+  return (
+    <group>
+      <Sky glow={glow} />
+      <Ground />
+      <Ruins detail={profile.detail} shadows={profile.shadows} />
+
+      {/* Weathered courses banding the walls, and fallen stone banked against
+          the base so nothing meets the ground at a clean right angle. */}
+      {profile.detail && (
+        <Decor items={ruinCourses} shape="box" color="#6d573f" roughness={0.95} metalness={0.02} />
+      )}
+      {profile.detail && (
+        <Decor
+          items={ruinRubble}
+          shape="box"
+          color="#846c50"
+          roughness={0.96}
+          metalness={0.02}
+          castShadow={profile.shadows}
+        />
+      )}
+
+      {profile.detail && <RuinProps accent={accent} />}
+      {profile.particles > 0 && <Dust count={Math.round(profile.particles * 0.6)} />}
+      <Boundary />
+
+      {profile.detail && !profile.bloom && <Glow items={halos} />}
+    </group>
+  );
+};

@@ -71,7 +71,13 @@ export interface QualityProfile {
   particles: number;
   /** Draw distance for the fog. */
   fogFar: number;
-  /** Render rooftop spires, signage and other non-essential detail. */
+  /**
+   * Instanced decoration: lit windows, spires, street furniture, hull panels.
+   *
+   * On even the weakest hardware this is close to free - each layer is one
+   * draw call however many objects are in it - so it is now on everywhere.
+   * The flag stays because a future addition might not be.
+   */
   detail: boolean;
 }
 
@@ -87,5 +93,20 @@ export const QUALITY_PROFILES: Record<QualityLevel, QualityProfile> = {
   ultra: { dpr: [1, 1.5], shadows: true, bloom: true, antialias: true, particles: 700, fogFar: 175, detail: true },
   high: { dpr: [1, 1.25], shadows: false, bloom: true, antialias: true, particles: 450, fogFar: 150, detail: true },
   medium: { dpr: [1, 1], shadows: false, bloom: true, antialias: false, particles: 250, fogFar: 125, detail: true },
-  low: { dpr: [0.75, 1], shadows: false, bloom: false, antialias: false, particles: 0, fogFar: 95, detail: false },
+  /*
+   * Low keeps everything that is cheap and drops only what is genuinely
+   * expensive.
+   *
+   * It used to switch off `detail` as well, which saved almost nothing - that
+   * geometry is instanced, so it is a handful of draw calls whether it holds
+   * ten objects or four thousand - while removing the lit windows, the street
+   * furniture and every scrap of surface interest. The result was flat grey
+   * boxes in thick fog, and the honest reason the low preset looked lifeless.
+   *
+   * The real cost on weak hardware is full-screen work: bloom re-reads the
+   * whole frame several times, shadows add an entire render pass, and pixel
+   * ratio multiplies every fragment. Those stay off. A cheap glow stands in
+   * for the missing bloom.
+   */
+  low: { dpr: [0.75, 1], shadows: false, bloom: false, antialias: false, particles: 110, fogFar: 118, detail: true },
 };

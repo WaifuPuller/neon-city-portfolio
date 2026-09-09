@@ -179,7 +179,16 @@ export const Scene: React.FC<{ onCaption: (c: string | null) => void }> = ({ onC
   const theme = useGameStore((s) => s.theme);
   const worldId = useGameStore((s) => s.worldId);
 
-  const profile = QUALITY_PROFILES[quality];
+  const leanMode = useGameStore((s) => s.leanMode);
+
+  /* One derived profile, so nothing downstream has to know lean mode exists -
+     the worlds already gate their decoration on `detail` and `particles`. */
+  const base = QUALITY_PROFILES[quality];
+  const profile = useMemo(
+    () => (leanMode ? { ...base, detail: false, particles: 0 } : base),
+    [base, leanMode],
+  );
+
   const palette = THEMES[theme];
   const world = getWorld(worldId);
   const Environment = ENVIRONMENTS[world.id];
